@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>木蘭傳 — 老師控制台</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: '微軟正黑體', 'PingFang TC', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .pixel { font-family: 'Press Start 2P', monospace; }
+  h1 { font-family:'Press Start 2P',monospace; font-size:14px; color:#e94560; margin-bottom:20px; }
+  h2 { font-family:'Press Start 2P',monospace; font-size:10px; color:#4ecdc4; margin-bottom:12px; }
+
+  .card {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    max-width: 600px;
+  }
+
+  .status-bar {
+    background: #0f0f1a;
+    border: 2px solid #4ecdc4;
+    padding: 10px 16px;
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;
+    color:#4ecdc4;
+    margin-bottom:20px;
+    max-width:600px;
+  }
+
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .btn { padding:10px 16px; font-family:'Press Start 2P',monospace; font-size:9px; border:none; cursor:pointer; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-red   { background:#e94560; color:#fff; }
+  .btn-green { background:#27ae60; color:#fff; }
+  .btn-blue  { background:#2980b9; color:#fff; }
+  .btn-gray  { background:#555;    color:#ccc; }
+  .btn-gold  { background:#f5a623; color:#1a1a2e; }
+  .btn-purple{ background:#8e44ad; color:#fff; }
+
+  select, input[type=number] {
+    background:#0f3460; color:#fff; border:1px solid #3498db;
+    padding:6px 10px; font-family:'微軟正黑體',sans-serif; font-size:14px;
+  }
+
+  .log {
+    background: #0a0a1a;
+    border: 1px solid #333;
+    padding: 10px;
+    height: 120px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 11px;
+    color: #4ecdc4;
+    margin-top: 10px;
+  }
+
+  .warn { color:#f87171; }
+  .ok   { color:#4ade80; }
+
+  label { font-size:13px; color:#aaa; display:block; margin-bottom:4px; }
+  .info-row { display:flex; gap:20px; flex-wrap:wrap; margin-top:6px; }
+  .info-item { font-size:12px; }
+  .info-val  { font-family:'Press Start 2P',monospace; font-size:10px; color:#f5a623; }
+
+  a.nav-link {
+    display:inline-block; margin-bottom:16px;
+    color:#4ecdc4; font-size:12px; text-decoration:none;
+  }
+  a.nav-link:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<h1>⚙ 老師控制台</h1>
+<a class="nav-link" href="teacher.html" target="_blank">→ 開啟老師大螢幕（另開分頁）</a>
+<a class="nav-link" href="student.html" target="_blank" style="margin-left:16px;">→ 開啟學生測試頁</a>
+
+<!-- 遊戲狀態 -->
+<div class="status-bar" id="statusBar">狀態：載入中...</div>
+
+<!-- 遊戲資訊 -->
+<div class="card">
+  <h2>📊 遊戲資訊</h2>
+  <div class="info-row">
+    <div class="info-item">關卡：<span class="info-val" id="infoStage">-</span></div>
+    <div class="info-item">題目：<span class="info-val" id="infoQ">-</span></div>
+    <div class="info-item">怪物HP：<span class="info-val" id="infoHp">-</span></div>
+    <div class="info-item">A組HP：<span class="info-val" id="infoHpA">-</span></div>
+    <div class="info-item">B組HP：<span class="info-val" id="infoHpB">-</span></div>
+    <div class="info-item">C組HP：<span class="info-val" id="infoHpC">-</span></div>
+  </div>
+</div>
+
+<!-- 遊戲控制 -->
+<div class="card">
+  <h2>🎮 遊戲控制</h2>
+  <div class="btn-row">
+    <button class="btn btn-green" onclick="startVoting()">▶ 開始投票</button>
+    <button class="btn btn-red"   onclick="stopVoting()">⏹ 停止投票</button>
+    <button class="btn btn-blue"  onclick="revealAnswer()">✓ 公布答案</button>
+    <button class="btn btn-gold"  onclick="nextQ()">下一題 ▶</button>
+    <button class="btn btn-gold"  onclick="nextStage()">下一關 ▶▶</button>
+  </div>
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="btn btn-purple" onclick="resetGame()">🔄 重置遊戲</button>
+    <button class="btn btn-gray"   onclick="setGroupHp()">設定組別HP</button>
+  </div>
+</div>
+
+<!-- 跳關設定 -->
+<div class="card">
+  <h2>⚡ 跳關 / 跳題</h2>
+  <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+    <div>
+      <label>關卡（1-5）</label>
+      <select id="jumpStage">
+        <option value="1">第 1 關 — 從軍報名</option>
+        <option value="2">第 2 關 — 沙場征戰</option>
+        <option value="3">第 3 關 — 凱旋班師</option>
+        <option value="4">第 4 關 — 辭官不受</option>
+        <option value="5">第 5 關 — 還我女兒身</option>
+      </select>
+    </div>
+    <div>
+      <label>題目（1-5）</label>
+      <input type="number" id="jumpQ" value="1" min="1" max="5" style="width:60px;">
+    </div>
+    <button class="btn btn-blue" onclick="jumpTo()">跳過去 →</button>
+  </div>
+</div>
+
+<!-- 設定組別HP -->
+<div class="card" id="hpCard" style="display:none;">
+  <h2>🛡 設定組別血量</h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div><label>A 組</label><input type="number" id="hpA" value="100" min="0" max="100" style="width:70px;"></div>
+    <div><label>B 組</label><input type="number" id="hpB" value="100" min="0" max="100" style="width:70px;"></div>
+    <div><label>C 組</label><input type="number" id="hpC" value="100" min="0" max="100" style="width:70px;"></div>
+    <button class="btn btn-green" onclick="applyHp()">套用</button>
+  </div>
+</div>
+
+<!-- 批次匯入 -->
+<div class="card" style="max-width:800px;">
+  <h2>📥 批次匯入題目</h2>
+  <p style="font-size:12px;color:#aaa;margin-bottom:10px;">
+    把題目貼進下方文字框，每題之間空一行，格式如下：
+  </p>
+  <pre style="background:#0a0a1a;color:#4ecdc4;padding:10px;font-size:11px;margin-bottom:12px;border:1px solid #333;overflow-x:auto;">題目文字（直接寫，不用加編號）
+A. 選項A
+B. 選項B
+C. 選項C
+D. 選項D
+答案: B
+
+（空一行後接下一題）
+
+討論題文字
+A. 選項A
+B. 選項B
+C. 選項C
+D. 選項D
+答案: 討論</pre>
+
+  <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label>匯入到哪一關</label>
+      <select id="importStage">
+        <option value="0">第 1 關 — 從軍報名</option>
+        <option value="1">第 2 關 — 沙場征戰</option>
+        <option value="2">第 3 關 — 凱旋班師</option>
+        <option value="3">第 4 關 — 辭官不受</option>
+        <option value="4">第 5 關 — 還我女兒身</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-blue"   onclick="parseImport()">🔍 解析預覽</button>
+      <button class="btn btn-green"  onclick="confirmImport()" id="btnConfirmImport" disabled>✅ 確認匯入</button>
+      <button class="btn btn-gray"   onclick="clearImport()">✕ 清除</button>
+    </div>
+  </div>
+
+  <textarea id="importText" rows="12"
+    placeholder="在這裡貼上題目文字..."
+    style="width:100%;background:#0f3460;color:#fff;border:1px solid #3498db;padding:10px;font-size:13px;font-family:微軟正黑體,sans-serif;resize:vertical;"></textarea>
+
+  <div id="importPreview" style="margin-top:12px;display:none;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#4ecdc4;margin-bottom:8px;" id="importSummary"></div>
+    <div id="importPreviewList" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- 題目管理 -->
+<div class="card" style="max-width:800px;">
+  <h2>📝 題目管理（逐題編輯）</h2>
+  <p style="font-size:12px;color:#aaa;margin-bottom:12px;">可以在這裡新增或修改題目，儲存後立即生效，不需要重新部署。</p>
+
+  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label>選擇關卡</label>
+      <select id="editStage" onchange="loadQuestionsForEdit()">
+        <option value="0">第 1 關 — 從軍報名</option>
+        <option value="1">第 2 關 — 沙場征戰</option>
+        <option value="2">第 3 關 — 凱旋班師</option>
+        <option value="3">第 4 關 — 辭官不受</option>
+        <option value="4">第 5 關 — 還我女兒身</option>
+      </select>
+    </div>
+    <button class="btn btn-green" onclick="addQuestion()">＋ 新增一題</button>
+    <button class="btn btn-blue"  onclick="saveQuestions()">💾 儲存所有題目</button>
+  </div>
+
+  <div id="questionEditor" style="display:flex;flex-direction:column;gap:14px;"></div>
+</div>
+
+<!-- 執行記錄 -->
+<div class="card">
+  <h2>📋 執行記錄</h2>
+  <div class="log" id="logBox"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhoPhZsWjqvyxo8WrHtryABL9AyDYuZW0",
+  authDomain: "mulan-game.firebaseapp.com",
+  databaseURL: "https://mulan-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mulan-game",
+  storageBucket: "mulan-game.firebasestorage.app",
+  messagingSenderId: "669570235600",
+  appId: "1:669570235600:web:e0637cbab41ccad6b3b2d5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const STAGE_MONSTERS = [
+  { name:"刁難徵兵官", maxHp:500 },
+  { name:"敵軍大將「燕然」", maxHp:800 },
+  { name:"搶功奸臣", maxHp:600 },
+  { name:"誘惑魔王", maxHp:700 },
+  { name:"最終Boss：可汗", maxHp:1200 }
+];
+
+const QUESTIONS = [
+  [
+    { text:"「唧唧復唧唧」中，「唧唧」是什麼聲音？", options:["蟲鳴聲","織布機聲","嘆息聲","馬蹄聲"], answer:1 },
+    { text:"木蘭為何決定從軍？", options:["想建功立業","父親年邁無兄長可替","被迫徵召","想逃婚"], answer:1 },
+    { text:"「東市買駿馬，西市買鞍韉」顯示木蘭做了什麼準備？", options:["四處採買、全副武裝備戰","雇用僕從","向親友借錢","偷竊軍糧"], answer:0 },
+    { text:"「旦辭爺娘去，暮宿黃河邊」說明木蘭出發的速度如何？", options:["走走停停","迷路了","行軍迅速","留戀故鄉"], answer:2 },
+    { text:"「不聞爺娘喚女聲，但聞燕山胡騎鳴啾啾」，這句話表達了什麼情感？", options:["興奮期待","思鄉之情與戰場的對比","對父母的憤怒","對敵人的恐懼"], answer:1 }
+  ],
+  [
+    { text:"「萬里赴戎機」中「戎機」是什麼意思？", options:["戰事、軍機要務","戎狄的機關陷阱","兵器名稱","軍糧補給"], answer:0 },
+    { text:"「關山度若飛」運用了什麼修辭？", options:["對偶","誇飾（誇張）","擬人","排比"], answer:1 },
+    { text:"木蘭在戰場上征戰幾年？", options:["三年","五年","十二年","一年"], answer:2 },
+    { text:"「朔氣傳金柝，寒光照鐵衣」描寫的是什麼場景？", options:["班師回朝的慶典","夜晚寒冷的軍營","激烈的戰鬥","木蘭思家"], answer:1 },
+    { text:"「將軍百戰死，壯士十年歸」用了什麼句法？", options:["問答","互文","比喻","頂真"], answer:1 }
+  ],
+  // ... 略，實際在 teacher.html 已完整定義
+];
+
+let gameState = {};
+let groupState = {};
+
+onValue(ref(db,'game'), snap => {
+  gameState = snap.val() || {};
+  const s = gameState;
+  const statusMap = { idle:'等待中', voting:'投票中', revealed:'已公布', stopped:'已停止', ended:'遊戲結束' };
+  document.getElementById('statusBar').textContent =
+    `狀態：${statusMap[s.status]||s.status}  ｜  第${s.stage||1}關  ｜  第${(s.question_index||0)+1}題  ｜  怪物 HP：${s.monster_hp||'-'}`;
+  document.getElementById('infoStage').textContent = s.stage || '-';
+  document.getElementById('infoQ').textContent     = (s.question_index||0)+1;
+  document.getElementById('infoHp').textContent    = s.monster_hp || '-';
+});
+
+onValue(ref(db,'groups'), snap => {
+  groupState = snap.val() || {};
+  document.getElementById('infoHpA').textContent = groupState.A?.hp ?? '-';
+  document.getElementById('infoHpB').textContent = groupState.B?.hp ?? '-';
+  document.getElementById('infoHpC').textContent = groupState.C?.hp ?? '-';
+});
+
+function log(msg, type='') {
+  const box = document.getElementById('logBox');
+  const now = new Date().toLocaleTimeString('zh-TW');
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${now}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+window.startVoting = async function() {
+  const timerEnd = Date.now() + 30000;
+  await remove(ref(db,'ballots'));
+  await update(ref(db,'game'), { status:'voting', timer_end:timerEnd });
+  log('✅ 開始投票', 'ok');
+};
+
+window.stopVoting = async function() {
+  await update(ref(db,'game'), { status:'stopped' });
+  log('⏹ 停止投票');
+};
+
+window.revealAnswer = async function() {
+  // 把計算邏輯委託給 teacher.html；這裡只觸發 reveal
+  const snap = await get(ref(db,'ballots'));
+  const ballots = snap.val() || {};
+  const stageIdx = (gameState.stage||1)-1;
+  const qIdx     = gameState.question_index || 0;
+
+  // 簡易計算（完整版在 teacher.html）
+  const groupVotes = { A:{c:0,t:0}, B:{c:0,t:0}, C:{c:0,t:0} };
+  Object.values(ballots).forEach(b => {
+    const g = b.group;
+    if (!groupVotes[g]) return;
+    groupVotes[g].t++;
+    // 討論題或答對
+    groupVotes[g].c++;  // admin 不知道正解，全部給分（用 teacher.html 公布才準確）
+  });
+
+  log('⚠ 建議從老師大螢幕按「公布答案」以確保計算正確', 'warn');
+  await update(ref(db,'game'), { status:'revealed' });
+};
+
+window.nextQ = async function() {
+  const nextIdx = (gameState.question_index||0) + 1;
+  if (nextIdx >= 5) { log('⚠ 已是最後一題，請按下一關', 'warn'); return; }
+  await update(ref(db,'game'), { status:'idle', question_index:nextIdx });
+  log(`✅ 進入第 ${nextIdx+1} 題`, 'ok');
+};
+
+window.nextStage = async function() {
+  const nextStageIdx = (gameState.stage||1);
+  if (nextStageIdx >= 5) {
+    await update(ref(db,'game'), { status:'ended' });
+    log('🎉 遊戲結束！', 'ok');
+    return;
+  }
+  const m = STAGE_MONSTERS[nextStageIdx];
+  await update(ref(db,'game'), {
+    status:'idle', stage:nextStageIdx+1, question_index:0,
+    monster_hp:m.maxHp, monster_max_hp:m.maxHp
+  });
+  log(`✅ 進入第 ${nextStageIdx+1} 關`, 'ok');
+};
+
+window.resetGame = async function() {
+  if (!confirm('確定重置遊戲？所有血量與投票記錄都會清除。')) return;
+  await set(ref(db,'game'), {
+    status:'idle', stage:1, question_index:0,
+    monster_hp:500, monster_max_hp:500
+  });
+  await set(ref(db,'groups'), {
+    A:{name:'A 組',hp:100,maxHp:100},
+    B:{name:'B 組',hp:100,maxHp:100},
+    C:{name:'C 組',hp:100,maxHp:100}
+  });
+  await remove(ref(db,'ballots'));
+  log('🔄 遊戲已重置', 'ok');
+};
+
+window.jumpTo = async function() {
+  const stage = parseInt(document.getElementById('jumpStage').value);
+  const q     = parseInt(document.getElementById('jumpQ').value) - 1;
+  const m     = STAGE_MONSTERS[stage-1];
+  await update(ref(db,'game'), {
+    status:'idle', stage, question_index:q,
+    monster_hp:m.maxHp, monster_max_hp:m.maxHp
+  });
+  log(`✅ 跳到第 ${stage} 關第 ${q+1} 題`, 'ok');
+};
+
+window.setGroupHp = function() {
+  const card = document.getElementById('hpCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+};
+
+window.applyHp = async function() {
+  const hpA = parseInt(document.getElementById('hpA').value);
+  const hpB = parseInt(document.getElementById('hpB').value);
+  const hpC = parseInt(document.getElementById('hpC').value);
+  await update(ref(db,'/'), {
+    'groups/A/hp': hpA,
+    'groups/B/hp': hpB,
+    'groups/C/hp': hpC
+  });
+  log(`✅ 血量已更新：A=${hpA} B=${hpB} C=${hpC}`, 'ok');
+};
+
+log('控制台已連線 ✅', 'ok');
+
+// ── 題目管理 ──
+const DEFAULT_QUESTIONS = [
+  [
+    { text:"「唧唧復唧唧」中，「唧唧」是什麼聲音？", options:["蟲鳴聲","織布機聲","嘆息聲","馬蹄聲"], answer:1 },
+    { text:"木蘭為何決定從軍？", options:["想建功立業","父親年邁無兄長可替","被迫徵召","想逃婚"], answer:1 },
+    { text:"「東市買駿馬，西市買鞍韉」顯示木蘭做了什麼準備？", options:["四處採買、全副武裝備戰","雇用僕從","向親友借錢","偷竊軍糧"], answer:0 },
+    { text:"「旦辭爺娘去，暮宿黃河邊」說明木蘭出發的速度如何？", options:["走走停停","迷路了","行軍迅速","留戀故鄉"], answer:2 },
+    { text:"「不聞爺娘喚女聲，但聞燕山胡騎鳴啾啾」，這句話表達了什麼情感？", options:["興奮期待","思鄉之情與戰場的對比","對父母的憤怒","對敵人的恐懼"], answer:1 }
+  ],
+  [
+    { text:"「萬里赴戎機」中「戎機」是什麼意思？", options:["戰事、軍機要務","戎狄的機關陷阱","兵器名稱","軍糧補給"], answer:0 },
+    { text:"「關山度若飛」運用了什麼修辭？", options:["對偶","誇飾（誇張）","擬人","排比"], answer:1 },
+    { text:"木蘭在戰場上征戰幾年？", options:["三年","五年","十二年","一年"], answer:2 },
+    { text:"「朔氣傳金柝，寒光照鐵衣」描寫的是什麼場景？", options:["班師回朝的慶典","夜晚寒冷的軍營","激烈的戰鬥","木蘭思家"], answer:1 },
+    { text:"「將軍百戰死，壯士十年歸」用了什麼句法？", options:["問答","互文","比喻","頂真"], answer:1 }
+  ],
+  [
+    { text:"「歸來見天子，天子坐明堂」中，「明堂」是指？", options:["明亮的大廳","天子接見朝臣的正殿","軍事會議室","木蘭的家"], answer:1 },
+    { text:"天子給木蘭的獎賞中，哪一項是木蘭主動拒絕的？", options:["賞賜金錢","尚書郎（官職）","返鄉假期","錦緞布料"], answer:1 },
+    { text:"木蘭請求天子讓她回家，她最渴望的是什麼？", options:["嫁給將軍","回到父母身邊","開設武館","繼續從軍"], answer:1 },
+    { text:"「願借明駝千里足」中「明駝」是什麼？", options:["一種快馬","能日行千里的駱駝","一種飛鳥","神話生物"], answer:1 },
+    { text:"木蘭辭官不受，體現了她哪種價值觀？", options:["貪圖享樂","孝順、不慕名利","膽小怕事","瞧不起官場"], answer:1 }
+  ],
+  [
+    { text:"木蘭回到家後，最先做的事是什麼？", options:["睡覺","開門見父母","換上戎裝","宴請將士"], answer:1 },
+    { text:"「當窗理雲鬢，對鏡貼花黃」說明木蘭恢復了什麼？", options:["戰士的裝扮","女兒的裝扮","官員的服裝","農民的打扮"], answer:1 },
+    { text:"「出門看火伴，火伴皆驚忙」，夥伴們震驚的原因是什麼？", options:["木蘭帶回很多戰利品","才發現木蘭是女生","木蘭受了重傷","木蘭帶回敵將"], answer:1 },
+    { text:"「同行十二年，不知木蘭是女郎」，這說明木蘭有什麼能力？", options:["使用魔法","長期隱瞞身份、英勇過人","不說話","偽裝成老人"], answer:1 },
+    { text:"以下哪個詞最能形容木蘭的性格？", options:["衝動魯莽","孝順勇敢、淡泊名利","自私自利","膽怯懦弱"], answer:1 }
+  ],
+  [
+    { text:"「雄兔腳撲朔，雌兔眼迷離」這個比喻的用意是？", options:["形容兔子很可愛","說明雌雄難辨，反問別人怎能識破她","批評木蘭行為","形容戰場混亂"], answer:1 },
+    { text:"「雙兔傍地走，安能辨我是雄雌」是全詩的什麼部分？", options:["開頭","轉折","結尾（卒章顯志）","高潮"], answer:2 },
+    { text:"木蘭詩的主題是什麼？（選最佳答案）", options:["歌頌戰爭的榮耀","讚揚女性的孝道、勇敢與智慧","批評朝廷腐敗","描述古代交通"], answer:1 },
+    { text:"木蘭詩屬於哪種文學體裁？", options:["律詩","絕句","樂府詩","詞"], answer:2 },
+    { text:"【討論題】如果你是木蘭，你會做出相同的選擇嗎？（任何答案都算對！）", options:["會，因為家人最重要","會，因為想保護國家","不會，有更好的方式","需要看情況"], answer:-1 }
+  ]
+];
+
+let editingQuestions = [];
+
+async function loadQuestionsForEdit() {
+  const stageIdx = parseInt(document.getElementById('editStage').value);
+  const snap = await get(ref(db, `custom_questions/${stageIdx}`));
+  editingQuestions = snap.val() ? JSON.parse(JSON.stringify(snap.val())) : JSON.parse(JSON.stringify(DEFAULT_QUESTIONS[stageIdx]));
+  renderQuestionEditor();
+}
+
+function renderQuestionEditor() {
+  const container = document.getElementById('questionEditor');
+  container.innerHTML = '';
+  const LABELS = ['A','B','C','D'];
+
+  editingQuestions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#0f0f2a;border:1px solid #3498db;padding:14px;';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+    header.innerHTML = `
+      <span style="font-family:'Press Start 2P',monospace;font-size:9px;color:#4ecdc4;">第 ${qi+1} 題</span>
+      <button onclick="removeQuestion(${qi})" style="background:#e94560;border:none;color:#fff;padding:4px 8px;cursor:pointer;font-size:10px;">✕ 刪除</button>`;
+    card.appendChild(header);
+
+    // 題目文字
+    const qLabel = document.createElement('label');
+    qLabel.textContent = '題目文字';
+    qLabel.style.cssText = 'font-size:12px;color:#aaa;display:block;margin-bottom:4px;';
+    const qInput = document.createElement('textarea');
+    qInput.value = q.text;
+    qInput.rows = 2;
+    qInput.style.cssText = 'width:100%;background:#0f3460;color:#fff;border:1px solid #3498db;padding:8px;font-size:14px;font-family:微軟正黑體,sans-serif;resize:vertical;';
+    qInput.oninput = e => { editingQuestions[qi].text = e.target.value; };
+    card.appendChild(qLabel);
+    card.appendChild(qInput);
+
+    // 選項
+    const optWrap = document.createElement('div');
+    optWrap.style.cssText = 'margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+    q.options.forEach((opt, oi) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+      const isCorrect = oi === q.answer;
+      row.innerHTML = `
+        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:${isCorrect?'#2ecc71':'#f5a623'};">${LABELS[oi]}</span>
+        <input type="text" value="${opt.replace(/"/g,'&quot;')}"
+          style="flex:1;background:#0f3460;color:#fff;border:1px solid ${isCorrect?'#2ecc71':'#333'};padding:6px;font-size:13px;font-family:微軟正黑體,sans-serif;"
+          oninput="editingQuestions[${qi}].options[${oi}]=this.value;">
+        <input type="radio" name="ans_${qi}" value="${oi}" ${isCorrect?'checked':''}
+          title="設為正確答案"
+          onchange="editingQuestions[${qi}].answer=${oi};renderQuestionEditor();"
+          style="cursor:pointer;width:16px;height:16px;">`;
+      optWrap.appendChild(row);
+    });
+    card.appendChild(optWrap);
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:11px;color:#666;margin-top:6px;';
+    hint.textContent = '🔘 點選右側圓圈 = 設為正確答案｜-1 = 討論題（全部都對）';
+    card.appendChild(hint);
+
+    // 討論題開關
+    const discRow = document.createElement('div');
+    discRow.style.cssText = 'margin-top:6px;display:flex;align-items:center;gap:8px;';
+    discRow.innerHTML = `
+      <input type="checkbox" id="disc_${qi}" ${q.answer===-1?'checked':''}
+        onchange="editingQuestions[${qi}].answer=this.checked?-1:0;renderQuestionEditor();"
+        style="width:16px;height:16px;cursor:pointer;">
+      <label for="disc_${qi}" style="font-size:12px;color:#aaa;cursor:pointer;">設為討論題（任何答案都算對）</label>`;
+    card.appendChild(discRow);
+
+    container.appendChild(card);
+  });
+}
+
+window.addQuestion = function() {
+  editingQuestions.push({
+    text: '（輸入題目文字）',
+    options: ['選項 A', '選項 B', '選項 C', '選項 D'],
+    answer: 0
+  });
+  renderQuestionEditor();
+  document.getElementById('questionEditor').lastElementChild?.scrollIntoView({ behavior:'smooth' });
+};
+
+window.removeQuestion = function(idx) {
+  if (!confirm(`確定刪除第 ${idx+1} 題？`)) return;
+  editingQuestions.splice(idx, 1);
+  renderQuestionEditor();
+};
+
+window.saveQuestions = async function() {
+  const stageIdx = parseInt(document.getElementById('editStage').value);
+  if (editingQuestions.length === 0) { log('⚠ 至少要有 1 題', 'warn'); return; }
+  await set(ref(db, `custom_questions/${stageIdx}`), editingQuestions);
+  log(`✅ 第 ${stageIdx+1} 關題目已儲存（共 ${editingQuestions.length} 題）`, 'ok');
+  alert(`✅ 儲存成功！共 ${editingQuestions.length} 題。`);
+};
+
+// 初始載入第 1 關題目
+loadQuestionsForEdit();
+
+// ── 批次匯入 ──
+let parsedImportQuestions = [];
+
+window.parseImport = function() {
+  const text = document.getElementById('importText').value.trim();
+  if (!text) { log('⚠ 請先貼上題目文字', 'warn'); return; }
+
+  const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  parsedImportQuestions = [];
+  const errors = [];
+
+  blocks.forEach((block, bi) => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 3) { errors.push(`第 ${bi+1} 題：行數不足`); return; }
+
+    // 第一行是題目
+    const text = lines[0];
+
+    // 找選項行（A. / (A) / A) / A：）
+    const optLines = lines.filter(l => /^[A-Da-d][\.\)：:、]\s*.+/.test(l));
+    // 找答案行
+    const ansLine = lines.find(l => /^答案[：:]/i.test(l));
+
+    if (optLines.length < 2) { errors.push(`第 ${bi+1} 題「${text.slice(0,15)}...」：找不到選項（需以 A. B. C. D. 開頭）`); return; }
+
+    const options = optLines.slice(0, 4).map(l => l.replace(/^[A-Da-d][\.\)：:、]\s*/, '').trim());
+    // 補足 4 個選項
+    while (options.length < 4) options.push('');
+
+    let answer = -1;
+    if (ansLine) {
+      const ansVal = ansLine.replace(/^答案[：:]\s*/i, '').trim().toUpperCase();
+      if (ansVal === '討論' || ansVal === 'D討論' || ansVal === '-1') {
+        answer = -1;
+      } else {
+        const idx = ['A','B','C','D'].indexOf(ansVal);
+        answer = idx >= 0 ? idx : -1;
+      }
+    }
+
+    parsedImportQuestions.push({ text, options, answer });
+  });
+
+  // 顯示預覽
+  const previewEl  = document.getElementById('importPreview');
+  const summaryEl  = document.getElementById('importSummary');
+  const listEl     = document.getElementById('importPreviewList');
+  previewEl.style.display = 'block';
+  listEl.innerHTML = '';
+
+  if (errors.length) {
+    summaryEl.innerHTML = `<span style="color:#f87171">⚠ 解析到 ${parsedImportQuestions.length} 題，${errors.length} 題有問題：</span>`;
+    errors.forEach(e => {
+      const d = document.createElement('div');
+      d.style.cssText = 'color:#f87171;font-size:11px;';
+      d.textContent = '• ' + e;
+      listEl.appendChild(d);
+    });
+  }
+
+  summaryEl.textContent = `✅ 解析完成，共 ${parsedImportQuestions.length} 題`;
+
+  const LABELS = ['A','B','C','D'];
+  parsedImportQuestions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#0a0a1a;border:1px solid #3498db;padding:10px;';
+    card.innerHTML = `
+      <div style="font-size:9px;font-family:'Press Start 2P',monospace;color:#f5a623;margin-bottom:6px;">第 ${i+1} 題</div>
+      <div style="font-size:13px;color:#fff;margin-bottom:6px;">${q.text}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        ${q.options.map((opt, oi) => `
+          <div style="font-size:12px;color:${oi===q.answer?'#2ecc71':'#aaa'};">
+            <span style="font-family:'Press Start 2P',monospace;font-size:8px;">${LABELS[oi]}</span>
+            ${opt} ${oi===q.answer?'✓':''}
+          </div>`).join('')}
+      </div>
+      ${q.answer===-1?'<div style="font-size:11px;color:#4ecdc4;margin-top:4px;">💬 討論題（全部算對）</div>':''}
+    `;
+    listEl.appendChild(card);
+  });
+
+  document.getElementById('btnConfirmImport').disabled = parsedImportQuestions.length === 0;
+  log(`✅ 解析完成：${parsedImportQuestions.length} 題`, 'ok');
+};
+
+window.confirmImport = async function() {
+  if (parsedImportQuestions.length === 0) return;
+  const stageIdx = parseInt(document.getElementById('importStage').value);
+  const stageName = ['從軍報名','沙場征戰','凱旋班師','辭官不受','還我女兒身'][stageIdx];
+
+  // 詢問是取代還是附加
+  const mode = confirm(
+    `要匯入 ${parsedImportQuestions.length} 題到「第 ${stageIdx+1} 關：${stageName}」\n\n` +
+    `點「確定」→ 取代該關所有題目\n點「取消」→ 附加到現有題目後面`
+  );
+
+  let finalQuestions;
+  if (mode) {
+    // 取代
+    finalQuestions = parsedImportQuestions;
+  } else {
+    // 附加
+    const snap = await get(ref(db, `custom_questions/${stageIdx}`));
+    const existing = snap.val() || DEFAULT_QUESTIONS[stageIdx];
+    finalQuestions = [...existing, ...parsedImportQuestions];
+  }
+
+  await set(ref(db, `custom_questions/${stageIdx}`), finalQuestions);
+  log(`✅ 匯入成功！第 ${stageIdx+1} 關共 ${finalQuestions.length} 題`, 'ok');
+  alert(`✅ 匯入成功！\n第 ${stageIdx+1} 關：${stageName}\n共 ${finalQuestions.length} 題`);
+
+  // 清除匯入區
+  clearImport();
+  // 重新載入題目編輯器
+  document.getElementById('editStage').value = stageIdx;
+  loadQuestionsForEdit();
+};
+
+window.clearImport = function() {
+  document.getElementById('importText').value = '';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('btnConfirmImport').disabled = true;
+  parsedImportQuestions = [];
+};
+</script>
+</body>
+</html>

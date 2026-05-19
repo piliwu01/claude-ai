@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>木蘭傳 — 老師大螢幕</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: '微軟正黑體', 'PingFang TC', sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .pixel { font-family: 'Press Start 2P', monospace; }
+
+  /* Header */
+  .game-header {
+    background: #16213e;
+    border-bottom: 3px solid #e94560;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .game-title { font-family:'Press Start 2P',monospace; font-size:16px; color:#e94560; text-shadow:2px 2px 0 #7b0f1f; }
+  .stage-info { text-align:center; }
+  .stage-num  { font-family:'Press Start 2P',monospace; font-size:10px; color:#f5a623; }
+  .stage-name { font-family:'Press Start 2P',monospace; font-size:13px; color:#4ecdc4; margin-top:3px; }
+  .q-info     { font-family:'Press Start 2P',monospace; font-size:10px; color:#aaa; }
+
+  /* Main layout */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Arena (left) */
+  .arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Anime dramatic background */
+  .arena {
+    background: radial-gradient(ellipse at 50% 30%, #2d1b69 0%, #1a0a3a 40%, #0a0a1a 100%);
+    overflow: hidden;
+  }
+  .arena::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 20%, rgba(120,60,255,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 20% at 50% 15%, rgba(200,150,255,0.12) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Ground — anime tile floor */
+  .arena::after {
+    content: '';
+    position: absolute;
+    bottom: 52px; left: 0; right: 0;
+    height: 50px;
+    background: linear-gradient(180deg,
+      rgba(60,180,80,0.7) 0%,
+      rgba(30,100,40,0.9) 40%,
+      rgba(10,40,15,1) 100%
+    );
+    border-top: 3px solid rgba(100,255,120,0.6);
+    box-shadow: 0 -1px 20px rgba(60,255,80,0.2);
+    z-index: 0;
+  }
+
+  /* Monster area */
+  .monster-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    z-index: 1;
+    padding-bottom: 40px;
+  }
+  .monster-name {
+    font-family:'Press Start 2P',monospace; font-size:12px;
+    color:#fff;
+    text-shadow: 0 0 10px rgba(255,80,80,0.8), 2px 2px 0 #000;
+    background: linear-gradient(135deg, #c0392b, #8b0000);
+    padding: 5px 18px; border-radius: 20px;
+    border: 2px solid rgba(255,150,150,0.5);
+    box-shadow: 0 0 16px rgba(255,50,50,0.4), inset 0 1px 0 rgba(255,200,200,0.2);
+  }
+  .monster-hp-wrap { display:flex; align-items:center; gap:10px; width:100%; max-width:440px; }
+  .monster-hp-bar  {
+    flex:1; height:24px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius:12px; overflow:hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .monster-hp-fill {
+    height:100%;
+    background: linear-gradient(90deg, #ff1744, #ff6d00, #ffab00);
+    border-radius:12px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 8px rgba(255,100,0,0.6);
+    position:relative;
+  }
+  .monster-hp-fill::after {
+    content:'';
+    position:absolute; top:2px; left:4px; right:4px; height:6px;
+    background: rgba(255,255,255,0.25); border-radius:3px;
+  }
+  .monster-hp-text { font-family:'Press Start 2P',monospace; font-size:8px; color:#ffab00; white-space:nowrap; min-width:110px; text-shadow:0 0 8px rgba(255,170,0,0.6); }
+  #monsterCanvas   { filter: drop-shadow(0 6px 20px rgba(200,50,255,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8)); }
+
+  /* Heroes area */
+  .heroes-area {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    z-index: 1;
+    padding: 0 20px;
+    min-height: 80px;
+    align-items: flex-end;
+  }
+  .hero-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .hero-label {
+    font-family:'Press Start 2P',monospace; font-size:7px;
+    background: rgba(0,0,0,0.7);
+    color:#fff; padding:2px 8px; border-radius:10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+  }
+  .hero-hp-mini { font-size:8px; font-family:'Press Start 2P',monospace; text-shadow:0 0 6px currentColor; }
+  canvas.hero { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(255,255,255,0.1)); }
+
+  /* Manga damage popup */
+  .dmg-popup {
+    position: absolute;
+    font-family: '微軟正黑體', sans-serif;
+    font-size: 44px;
+    font-weight: 900;
+    color: #ffee00;
+    -webkit-text-stroke: 4px #000;
+    paint-order: stroke fill;
+    pointer-events: none;
+    z-index: 10;
+    animation: dmgFloat 1.8s cubic-bezier(0.2,0.8,0.4,1) forwards;
+    transform-origin: center;
+  }
+  @keyframes dmgFloat {
+    0%   { opacity:1; transform:translateY(0) scale(1.5) rotate(-8deg); }
+    30%  { transform:translateY(-20px) scale(1.2) rotate(4deg); }
+    100% { opacity:0; transform:translateY(-80px) scale(0.7) rotate(-2deg); }
+  }
+
+  /* Speed lines behind monster */
+  .speed-lines {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 52px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .speed-lines.active { opacity: 1; }
+
+  /* Question box — manga speech bubble style */
+  .question-box {
+    background: #fff !important;
+    border: 4px solid #000 !important;
+    border-radius: 12px;
+    position: relative;
+  }
+  .question-box::before {
+    content: '';
+    position: absolute;
+    top: -18px; left: 30px;
+    border: 9px solid transparent;
+    border-bottom-color: #000;
+  }
+  .question-box::after {
+    content: '';
+    position: absolute;
+    top: -11px; left: 32px;
+    border: 7px solid transparent;
+    border-bottom-color: #fff;
+  }
+  .question-label { color: #e94560 !important; }
+  .question-text  { color: #111 !important; font-size:20px !important; }
+
+  /* Question box */
+  .question-box {
+    background: #0f3460;
+    border: 3px solid #4ecdc4;
+    padding: 14px 18px;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+  .question-label { font-family:'Press Start 2P',monospace; font-size:8px; color:#4ecdc4; margin-bottom:6px; }
+  .question-text  { font-size:20px; color:#fff; font-weight:bold; line-height:1.6; }
+
+  /* Options row */
+  .options-row {
+    display: flex;
+    gap: 8px;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+  .opt-chip {
+    flex: 1;
+    padding: 8px 4px;
+    background: #16213e;
+    border: 2px solid #0f3460;
+    text-align: center;
+    font-size: 14px;
+    color: #ccc;
+    transition: all 0.3s;
+  }
+  .opt-chip .opt-key { font-family:'Press Start 2P',monospace; font-size:9px; color:#f5a623; display:block; margin-bottom:3px; }
+  .opt-chip.correct { background:#1a4a2a; border-color:#2ecc71; color:#2ecc71; }
+  .opt-chip.wrong   { background:#2a1a1a; border-color:#555; color:#666; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: #16213e;
+    border-left: 3px solid #0f3460;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .sb-section { padding: 12px 14px; border-bottom: 2px solid #0f3460; }
+  .sb-label { font-family:'Press Start 2P',monospace; font-size:7px; color:#aaa; margin-bottom:8px; }
+
+  /* QR */
+  .qr-wrap { text-align:center; }
+  #qrCanvas { display:block; margin:0 auto; image-rendering:pixelated; }
+  .qr-url { font-size:9px; color:#666; margin-top:4px; font-family:monospace; }
+
+  /* Timer */
+  .timer-num { font-family:'Press Start 2P',monospace; font-size:36px; color:#f5a623; text-align:center; line-height:1; }
+  .timer-num.urgent { color:#e94560; animation:pulse 0.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .timer-bar-bg { width:100%; height:8px; background:#333; border:1px solid #555; margin-top:6px; }
+  .timer-bar-fill { height:100%; background:#f5a623; transition:width 1s linear; }
+
+  /* Group HP */
+  .group-row { margin-bottom:10px; }
+  .group-header { display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px; }
+  .group-name-label { color:#4ecdc4; }
+  .group-hp-val { color:#fff; font-family:'Press Start 2P',monospace; font-size:8px; }
+  .g-hp-bg { height:14px; background:#1a1a2e; border:1px solid #333; }
+  .g-hp-fill { height:100%; transition:width 0.5s; }
+
+  /* Votes */
+  .vote-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .vote-key { font-family:'Press Start 2P',monospace; font-size:8px; color:#f5a623; width:14px; }
+  .vote-bar-bg { flex:1; height:14px; background:#1a1a2e; border:1px solid #333; }
+  .vote-bar-fill { height:100%; background:#4ecdc4; transition:width 0.3s; }
+  .vote-count { font-family:'Press Start 2P',monospace; font-size:8px; color:#aaa; width:24px; text-align:right; }
+
+  /* Monster HP reveal */
+  .monster-dmg-info { font-family:'Press Start 2P',monospace; font-size:8px; color:#f5a623; text-align:center; padding:6px; }
+
+  /* Controls */
+  .controls {
+    background: #0f0f1a;
+    border-top: 3px solid #e94560;
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn { padding:8px 14px; font-family:'Press Start 2P',monospace; font-size:8px; border:none; cursor:pointer; transition:opacity 0.15s; }
+  .btn:active { opacity:0.7; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-red   { background:#e94560; color:#fff; }
+  .btn-green { background:#27ae60; color:#fff; }
+  .btn-blue  { background:#2980b9; color:#fff; }
+  .btn-gray  { background:#555;    color:#ccc; }
+  .btn-gold  { background:#f5a623; color:#1a1a2e; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="game-header">
+  <div class="game-title">⚔ 木蘭傳 ⚔</div>
+  <div class="stage-info">
+    <div class="stage-num" id="stageNum">第 1 關 / 共 5 關</div>
+    <div class="stage-name" id="stageName">從軍報名</div>
+  </div>
+  <div class="q-info" id="qInfo">題目 1 / 5</div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Arena -->
+  <div class="arena">
+    <!-- Monster -->
+    <div class="monster-area">
+      <div class="monster-name" id="monsterName">👹 刁難徵兵官</div>
+      <div class="monster-hp-wrap">
+        <div class="monster-hp-bar"><div class="monster-hp-fill" id="monsterHpFill" style="width:100%"></div></div>
+        <div class="monster-hp-text" id="monsterHpText">HP 500 / 500</div>
+      </div>
+      <canvas id="monsterCanvas" width="200" height="200" style="width:200px;height:200px;"></canvas>
+    </div>
+
+    <!-- Heroes -->
+    <div class="heroes-area" id="heroesArea">
+      <!-- 動態產生 -->
+    </div>
+
+    <!-- Question -->
+    <div class="question-box" id="questionBox" style="display:none;">
+      <div class="question-label" id="qLabel">▶ 第 1 題</div>
+      <div class="question-text" id="qText">等待開始...</div>
+    </div>
+
+    <!-- Options -->
+    <div class="options-row" id="optionsRow"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- QR Code -->
+    <div class="sb-section">
+      <div class="sb-label">📱 學生掃碼加入</div>
+      <div class="qr-wrap">
+        <canvas id="qrCanvas" width="120" height="120"></canvas>
+        <div class="qr-url" id="qrUrl">載入中...</div>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="sb-section">
+      <div class="sb-label">⏱ 剩餘時間</div>
+      <div class="timer-num" id="timerNum">--</div>
+      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerBar" style="width:100%"></div></div>
+    </div>
+
+    <!-- Groups -->
+    <div class="sb-section">
+      <div class="sb-label">🛡 各組血量</div>
+      <div id="groupsArea"></div>
+    </div>
+
+    <!-- Votes -->
+    <div class="sb-section">
+      <div class="sb-label">📊 即時票數</div>
+      <div id="votesArea"></div>
+    </div>
+
+    <!-- Damage info -->
+    <div class="sb-section" id="dmgInfoSection" style="display:none;">
+      <div class="sb-label">💥 本題傷害</div>
+      <div id="dmgInfoArea"></div>
+      <div class="monster-dmg-info" id="monsterDmgInfo"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-gray"  id="btnPrev"    onclick="prevQ()">◀ 上一題</button>
+  <button class="btn btn-green" id="btnStart"   onclick="startVoting()">▶ 開始投票</button>
+  <button class="btn btn-red"   id="btnStop"    onclick="stopVoting()" disabled>⏹ 停止</button>
+  <button class="btn btn-blue"  id="btnReveal"  onclick="revealAnswer()" disabled>✓ 公布答案</button>
+  <button class="btn btn-gold"  id="btnNext"    onclick="nextQ()">下一題 ▶</button>
+  <button class="btn btn-gray"  id="btnNextStg" onclick="nextStage()" style="display:none;">下一關 ▶▶</button>
+</div>
+
+<!-- Firebase + QRCode -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhoPhZsWjqvyxo8WrHtryABL9AyDYuZW0",
+  authDomain: "mulan-game.firebaseapp.com",
+  databaseURL: "https://mulan-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mulan-game",
+  storageBucket: "mulan-game.firebasestorage.app",
+  messagingSenderId: "669570235600",
+  appId: "1:669570235600:web:e0637cbab41ccad6b3b2d5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 題目資料
+const STAGES = [
+  { id:1, name:"從軍報名", monster:{ name:"刁難徵兵官", maxHp:500 }, color:"#e67e22", questions:[
+    { text:"「唧唧復唧唧」中，「唧唧」是什麼聲音？", options:["蟲鳴聲","織布機聲","嘆息聲","馬蹄聲"], answer:1 },
+    { text:"木蘭為何決定從軍？", options:["想建功立業","父親年邁無兄長可替","被迫徵召","想逃婚"], answer:1 },
+    { text:"「東市買駿馬，西市買鞍韉」顯示木蘭做了什麼準備？", options:["四處採買、全副武裝備戰","雇用僕從","向親友借錢","偷竊軍糧"], answer:0 },
+    { text:"「旦辭爺娘去，暮宿黃河邊」說明木蘭出發的速度如何？", options:["走走停停","迷路了","行軍迅速","留戀故鄉"], answer:2 },
+    { text:"「不聞爺娘喚女聲，但聞燕山胡騎鳴啾啾」，這句話表達了什麼情感？", options:["興奮期待","思鄉之情與戰場的對比","對父母的憤怒","對敵人的恐懼"], answer:1 }
+  ]},
+  { id:2, name:"沙場征戰", monster:{ name:"敵軍大將「燕然」", maxHp:800 }, color:"#c0392b", questions:[
+    { text:"「萬里赴戎機」中「戎機」是什麼意思？", options:["戰事、軍機要務","戎狄的機關陷阱","兵器名稱","軍糧補給"], answer:0 },
+    { text:"「關山度若飛」運用了什麼修辭？", options:["對偶","誇飾（誇張）","擬人","排比"], answer:1 },
+    { text:"木蘭在戰場上征戰幾年？", options:["三年","五年","十二年","一年"], answer:2 },
+    { text:"「朔氣傳金柝，寒光照鐵衣」描寫的是什麼場景？", options:["班師回朝的慶典","夜晚寒冷的軍營","激烈的戰鬥","木蘭思家"], answer:1 },
+    { text:"「將軍百戰死，壯士十年歸」用了什麼句法？", options:["問答","互文","比喻","頂真"], answer:1 }
+  ]},
+  { id:3, name:"凱旋班師", monster:{ name:"搶功奸臣", maxHp:600 }, color:"#8e44ad", questions:[
+    { text:"「歸來見天子，天子坐明堂」中，「明堂」是指？", options:["明亮的大廳","天子接見朝臣的正殿","軍事會議室","木蘭的家"], answer:1 },
+    { text:"天子給木蘭的獎賞中，哪一項是木蘭主動拒絕的？", options:["賞賜金錢","尚書郎（官職）","返鄉假期","錦緞布料"], answer:1 },
+    { text:"木蘭請求天子讓她回家，她最渴望的是什麼？", options:["嫁給將軍","回到父母身邊","開設武館","繼續從軍"], answer:1 },
+    { text:"「願借明駝千里足」中「明駝」是什麼？", options:["一種快馬","能日行千里的駱駝","一種飛鳥","神話生物"], answer:1 },
+    { text:"木蘭辭官不受，體現了她哪種價值觀？", options:["貪圖享樂","孝順、不慕名利","膽小怕事","瞧不起官場"], answer:1 }
+  ]},
+  { id:4, name:"辭官不受", monster:{ name:"誘惑魔王", maxHp:700 }, color:"#16a085", questions:[
+    { text:"木蘭回到家後，最先做的事是什麼？", options:["睡覺","開門見父母","換上戎裝","宴請將士"], answer:1 },
+    { text:"「當窗理雲鬢，對鏡貼花黃」說明木蘭恢復了什麼？", options:["戰士的裝扮","女兒的裝扮","官員的服裝","農民的打扮"], answer:1 },
+    { text:"「出門看火伴，火伴皆驚忙」，夥伴們震驚的原因是什麼？", options:["木蘭帶回很多戰利品","才發現木蘭是女生","木蘭受了重傷","木蘭帶回敵將"], answer:1 },
+    { text:"「同行十二年，不知木蘭是女郎」，這說明木蘭有什麼能力？", options:["使用魔法","長期隱瞞身份、英勇過人","不說話","偽裝成老人"], answer:1 },
+    { text:"以下哪個詞最能形容木蘭的性格？", options:["衝動魯莽","孝順勇敢、淡泊名利","自私自利","膽怯懦弱"], answer:1 }
+  ]},
+  { id:5, name:"還我女兒身", monster:{ name:"最終Boss：可汗", maxHp:1200 }, color:"#2c3e50", questions:[
+    { text:"「雄兔腳撲朔，雌兔眼迷離」這個比喻的用意是？", options:["形容兔子很可愛","說明雌雄難辨，反問別人怎能識破她","批評木蘭行為","形容戰場混亂"], answer:1 },
+    { text:"「雙兔傍地走，安能辨我是雄雌」是全詩的什麼部分？", options:["開頭","轉折","結尾（卒章顯志）","高潮"], answer:2 },
+    { text:"木蘭詩的主題是什麼？（選最佳答案）", options:["歌頌戰爭的榮耀","讚揚女性的孝道、勇敢與智慧","批評朝廷腐敗","描述古代交通"], answer:1 },
+    { text:"木蘭詩屬於哪種文學體裁？", options:["律詩","絕句","樂府詩","詞"], answer:2 },
+    { text:"【討論題】如果你是木蘭，你會做出相同的選擇嗎？（任何答案都算對！）", options:["會，因為家人最重要","會，因為想保護國家","不會，有更好的方式","需要看情況"], answer:-1 }
+  ]}
+];
+
+const GROUP_COLORS = { A:'#e94560', B:'#f5a623', C:'#27ae60' };
+const GROUP_NAMES  = { A:'A 組', B:'B 組', C:'C 組' };
+const LABELS = ['A','B','C','D'];
+
+let currentStage = 0;
+let currentQ = 0;
+let monsterHp = STAGES[0].monster.maxHp;
+let groupHps  = { A:100, B:100, C:100 };
+let timerInterval = null;
+let gameStatus = 'idle';
+
+// ── 從 Firebase 載入自訂題目（若有）──
+async function loadCustomQuestions() {
+  const snap = await get(ref(db, 'custom_questions'));
+  const custom = snap.val();
+  if (!custom) return;
+  Object.keys(custom).forEach(stageIdx => {
+    const idx = parseInt(stageIdx);
+    if (STAGES[idx] && custom[idx]) {
+      STAGES[idx].questions = custom[idx];
+    }
+  });
+}
+
+// ── 初始化 Firebase 資料 ──
+async function initGame() {
+  await set(ref(db, 'game'), {
+    status: 'idle',
+    stage: 1,
+    question_index: 0,
+    timer_end: 0,
+    monster_hp: STAGES[0].monster.maxHp,
+    monster_max_hp: STAGES[0].monster.maxHp
+  });
+  await set(ref(db, 'groups'), {
+    A: { name:'A 組', hp:100, maxHp:100 },
+    B: { name:'B 組', hp:100, maxHp:100 },
+    C: { name:'C 組', hp:100, maxHp:100 }
+  });
+  await remove(ref(db, 'ballots'));
+  renderAll();
+}
+
+// ── 監聽 Firebase ──
+onValue(ref(db, 'game'), snap => {
+  const g = snap.val();
+  if (!g) return;
+  gameStatus    = g.status;
+  currentStage  = (g.stage || 1) - 1;
+  currentQ      = g.question_index || 0;
+  monsterHp     = g.monster_hp;
+  updateMonsterHp(g.monster_hp, g.monster_max_hp || STAGES[currentStage].monster.maxHp);
+  updateStageUI();
+
+  if (g.status === 'voting') {
+    renderQuestion();
+    const timerEnd = g.timer_end || (Date.now() + 30000);
+    startTimer(timerEnd);
+    setButtons('voting');
+  } else if (g.status === 'revealed') {
+    if (timerInterval) clearInterval(timerInterval);
+    revealUI(g);
+    setButtons('revealed');
+  } else {
+    if (timerInterval) clearInterval(timerInterval);
+    setButtons('idle');
+  }
+});
+
+onValue(ref(db, 'groups'), snap => {
+  const data = snap.val();
+  if (!data) return;
+  Object.keys(data).forEach(g => { groupHps[g] = data[g].hp; });
+  renderGroups(data);
+});
+
+onValue(ref(db, 'ballots'), snap => {
+  const ballots = snap.val() || {};
+  renderVotes(ballots);
+});
+
+// ── UI 渲染 ──
+function updateStageUI() {
+  const stage = STAGES[currentStage];
+  document.getElementById('stageNum').textContent  = `第 ${currentStage+1} 關 / 共 5 關`;
+  document.getElementById('stageName').textContent = stage.name;
+  document.getElementById('qInfo').textContent     = `題目 ${currentQ+1} / 5`;
+  document.getElementById('monsterName').textContent = '👹 ' + stage.monster.name;
+  drawMonster(currentStage);
+  renderHeroes();
+}
+
+function renderQuestion() {
+  const q = STAGES[currentStage].questions[currentQ];
+  if (!q) return;
+  document.getElementById('questionBox').style.display = 'block';
+  document.getElementById('qLabel').textContent = `▶ 第 ${currentQ+1} 題`;
+  document.getElementById('qText').textContent  = q.text;
+
+  const row = document.getElementById('optionsRow');
+  row.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'opt-chip';
+    chip.id = `opt-${i}`;
+    chip.innerHTML = `<span class="opt-key">${LABELS[i]}</span>${opt}`;
+    row.appendChild(chip);
+  });
+}
+
+function renderGroups(data) {
+  const area = document.getElementById('groupsArea');
+  area.innerHTML = '';
+  Object.entries(data).forEach(([g, info]) => {
+    const pct = Math.max(0, info.hp / (info.maxHp||100) * 100);
+    const color = pct > 60 ? '#27ae60' : pct > 30 ? '#f5a623' : '#e94560';
+    area.innerHTML += `
+      <div class="group-row">
+        <div class="group-header">
+          <span class="group-name-label">${GROUP_NAMES[g]}</span>
+          <span class="group-hp-val">${info.hp} HP</span>
+        </div>
+        <div class="g-hp-bg">
+          <div class="g-hp-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
+      </div>`;
+  });
+}
+
+function renderVotes(ballots) {
+  const counts = { 0:0, 1:0, 2:0, 3:0 };
+  Object.values(ballots).forEach(b => {
+    if (b.answer !== undefined && b.answer >= 0) counts[b.answer]++;
+  });
+  const total = Object.values(counts).reduce((a,b) => a+b, 0);
+  const area  = document.getElementById('votesArea');
+  area.innerHTML = '';
+  LABELS.forEach((lbl, i) => {
+    const pct = total > 0 ? counts[i] / total * 100 : 0;
+    area.innerHTML += `
+      <div class="vote-row">
+        <div class="vote-key">${lbl}</div>
+        <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+        <div class="vote-count">${counts[i]}</div>
+      </div>`;
+  });
+}
+
+function revealUI(gameState) {
+  const q = STAGES[currentStage].questions[currentQ];
+  if (!q) return;
+  document.getElementById('questionBox').style.display = 'block';
+  document.getElementById('qText').textContent = q.text;
+
+  // 顯示正確/錯誤選項
+  const isDiscussion = q.answer === -1;
+  q.options.forEach((_, i) => {
+    const chip = document.getElementById(`opt-${i}`);
+    if (!chip) return;
+    chip.classList.remove('correct','wrong');
+    chip.classList.add(isDiscussion || i === q.answer ? 'correct' : 'wrong');
+  });
+
+  // 顯示傷害資訊
+  if (gameState.last_damage) {
+    const section = document.getElementById('dmgInfoSection');
+    const area    = document.getElementById('dmgInfoArea');
+    section.style.display = 'block';
+    area.innerHTML = '';
+    let totalDmg = 0;
+    Object.entries(gameState.last_damage).forEach(([g, dmg]) => {
+      area.innerHTML += `<div style="font-size:11px;color:#fff;margin-bottom:4px;">
+        <span style="color:${GROUP_COLORS[g]||'#fff'}">${GROUP_NAMES[g]}</span>
+        <span style="color:#f5a623;font-family:'Press Start 2P',monospace;font-size:9px;">${dmg} 傷害</span>
+      </div>`;
+      totalDmg += dmg;
+    });
+    document.getElementById('monsterDmgInfo').textContent = `怪物共扣 ${totalDmg} 血`;
+  }
+}
+
+function updateMonsterHp(hp, maxHp) {
+  const pct = Math.max(0, hp / maxHp * 100);
+  document.getElementById('monsterHpFill').style.width = pct + '%';
+  document.getElementById('monsterHpText').textContent = `HP ${hp} / ${maxHp}`;
+}
+
+function startTimer(endTs) {
+  if (timerInterval) clearInterval(timerInterval);
+  const total = 30;
+  const tick = () => {
+    const rem = Math.max(0, Math.ceil((endTs - Date.now()) / 1000));
+    const numEl = document.getElementById('timerNum');
+    const barEl = document.getElementById('timerBar');
+    numEl.textContent = rem;
+    numEl.className   = 'timer-num' + (rem <= 10 ? ' urgent' : '');
+    barEl.style.width = (rem / total * 100) + '%';
+    if (rem <= 0) clearInterval(timerInterval);
+  };
+  tick();
+  timerInterval = setInterval(tick, 500);
+}
+
+function setButtons(state) {
+  document.getElementById('btnStart').disabled  = state !== 'idle';
+  document.getElementById('btnStop').disabled   = state !== 'voting';
+  document.getElementById('btnReveal').disabled = state !== 'voting' && state !== 'stopped';
+  document.getElementById('btnPrev').disabled   = state === 'voting';
+  document.getElementById('btnNext').disabled   = state === 'voting';
+}
+
+function renderHeroes() {
+  const area = document.getElementById('heroesArea');
+  area.innerHTML = '';
+  const groups = ['A','B','C'];
+  const heroColors = { A:'#e94560', B:'#f5a623', C:'#27ae60' };
+  groups.forEach(g => {
+    const hp = groupHps[g] || 100;
+    const wrap = document.createElement('div');
+    wrap.className = 'hero-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.width  = 100;
+    canvas.height = 140;
+    canvas.className = 'hero';
+    canvas.style.width  = '80px';
+    canvas.style.height = '112px';
+    drawHero(canvas, heroColors[g], hp <= 0);
+    const label = document.createElement('div');
+    label.className = 'hero-label';
+    label.textContent = GROUP_NAMES[g];
+    const hpEl = document.createElement('div');
+    hpEl.className = 'hero-hp-mini pixel';
+    hpEl.style.color = hp > 60 ? '#27ae60' : hp > 30 ? '#f5a623' : '#e94560';
+    hpEl.textContent = `${hp}HP`;
+    wrap.appendChild(canvas);
+    wrap.appendChild(label);
+    wrap.appendChild(hpEl);
+    area.appendChild(wrap);
+  });
+}
+
+// ── Anime Cel-Shading Art Engine ──
+function outline(ctx, fn, color='#000', width=3) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  fn();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Cel-shading helper: draw shape, then overlay shadow
+function celShape(ctx, drawFn, baseColor, shadowColor, shadowAlpha=0.28) {
+  drawFn();
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = shadowColor;
+  ctx.globalAlpha = shadowAlpha;
+  ctx.fillRect(-9999,-9999,99999,99999);
+  ctx.restore();
+}
+
+function animeEye(ctx, cx, cy, rw, rh, irisColor, pupilColor='#000') {
+  // Eye white
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Iris gradient
+  const ig = ctx.createRadialGradient(cx, cy-rh*0.1, 0, cx, cy, rw*0.85);
+  ig.addColorStop(0, lightenColor(irisColor, 60));
+  ig.addColorStop(0.5, irisColor);
+  ig.addColorStop(1, darkenColor(irisColor, 40));
+  ctx.fillStyle = ig;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rw*0.78, rh*0.82, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Pupil
+  ctx.fillStyle = pupilColor;
+  ctx.beginPath(); ctx.ellipse(cx, cy+rh*0.05, rw*0.36, rh*0.52, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Main highlight (large)
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.beginPath(); ctx.ellipse(cx-rw*0.28, cy-rh*0.26, rw*0.28, rh*0.26, -0.4, 0, Math.PI*2);
+  ctx.fill();
+  // Secondary highlight (small)
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.beginPath(); ctx.ellipse(cx+rw*0.22, cy+rh*0.18, rw*0.12, rh*0.12, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Lash line
+  ctx.strokeStyle='#111'; ctx.lineWidth=rw*0.18;
+  ctx.beginPath();
+  ctx.moveTo(cx-rw, cy-rh*0.3);
+  ctx.bezierCurveTo(cx-rw*0.4, cy-rh*1.15, cx+rw*0.4, cy-rh*1.15, cx+rw, cy-rh*0.3);
+  ctx.stroke();
+  // Outline
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=rw*0.12;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI*2); ctx.stroke();
+}
+
+function darkenColor(hex, amt) {
+  if (!hex.startsWith('#')) return hex;
+  const num = parseInt(hex.replace('#',''),16);
+  const r=Math.max(0,(num>>16)-amt), g=Math.max(0,((num>>8)&0xff)-amt), b=Math.max(0,(num&0xff)-amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawHero(canvas, color, isDead) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  if (isDead) {
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(W/2, H*0.85, W*0.42, H*0.06, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#999'; ctx.strokeStyle='#555'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(W/2, H*0.72, W*0.38, H*0.14, 0.4, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#444'; ctx.lineWidth=3;
+    [[W*0.36,H*0.58],[W*0.58,H*0.58]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.moveTo(x-5,y-5); ctx.lineTo(x+5,y+5);
+      ctx.moveTo(x+5,y-5); ctx.lineTo(x-5,y+5); ctx.stroke();
+    });
+    return;
+  }
+
+  const cx = W/2;
+  // Ground shadow
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(cx, H*0.975, W*0.36, H*0.035, 0, 0, Math.PI*2); ctx.fill();
+
+  // ── Legs ──
+  ctx.strokeStyle='#111'; ctx.lineWidth=3; ctx.lineJoin='round';
+  // Leg shadow
+  ctx.fillStyle='#2a2a2a';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.24, H*0.63, W*0.2, H*0.32, [0,0,6,6]); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(cx+W*0.04, H*0.63, W*0.2, H*0.32, [0,0,6,6]); ctx.fill();
+  // Leg base
+  ctx.fillStyle='#444';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.23, H*0.62, W*0.2, H*0.32, [0,0,6,6]); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(cx+W*0.03, H*0.62, W*0.2, H*0.32, [0,0,6,6]); ctx.fill(); ctx.stroke();
+  // Leg highlight
+  ctx.fillStyle='rgba(255,255,255,0.1)';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.21, H*0.63, W*0.07, H*0.22, 3); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(cx+W*0.05, H*0.63, W*0.07, H*0.22, 3); ctx.fill();
+  // Boots
+  ['#1a1a1a','#2a2a2a'].forEach((bc,bi)=>{
+    ctx.fillStyle=bc;
+    ctx.beginPath(); ctx.ellipse(cx-W*0.14, H*0.945+bi*0.003, W*0.16-bi*0.02, H*0.052-bi*0.01, 0.15, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+W*0.14, H*0.945+bi*0.003, W*0.16-bi*0.02, H*0.052-bi*0.01, -0.15, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.strokeStyle='#111'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(cx-W*0.14, H*0.945, W*0.16, H*0.052, 0.15, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cx+W*0.14, H*0.945, W*0.16, H*0.052, -0.15, 0, Math.PI*2); ctx.stroke();
+
+  // ── Body armor (cel-shaded) ──
+  const armorBase = ctx.createLinearGradient(cx, H*0.33, cx, H*0.67);
+  armorBase.addColorStop(0, lightenColor(color, 35));
+  armorBase.addColorStop(0.5, color);
+  armorBase.addColorStop(1, darkenColor(color, 20));
+  ctx.fillStyle=armorBase;
+  ctx.strokeStyle='#111'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.roundRect(cx-W*0.29, H*0.33, W*0.58, H*0.31, 7); ctx.fill(); ctx.stroke();
+  // Armor shadow band
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.27, H*0.52, W*0.54, H*0.1, [0,0,5,5]); ctx.fill();
+  // Armor highlight
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.22, H*0.35, W*0.44, H*0.1, [5,5,0,0]); ctx.fill();
+  // Chest detail lines
+  ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.1,H*0.37); ctx.lineTo(cx-W*0.1,H*0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+W*0.1,H*0.37); ctx.lineTo(cx+W*0.1,H*0.6); ctx.stroke();
+
+  // Belt
+  ctx.fillStyle='#222'; ctx.strokeStyle='#111'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(cx-W*0.29, H*0.615, W*0.58, H*0.04, 2); ctx.fill(); ctx.stroke();
+  // Belt buckle
+  const buckleG = ctx.createLinearGradient(cx-W*0.07, H*0.61, cx+W*0.07, H*0.66);
+  buckleG.addColorStop(0,'#ffe066'); buckleG.addColorStop(1,'#c8860a');
+  ctx.fillStyle=buckleG;
+  ctx.beginPath(); ctx.roundRect(cx-W*0.07, H*0.61, W*0.14, H*0.055, 3); ctx.fill(); ctx.stroke();
+
+  // ── Sword ──
+  // Scabbard
+  ctx.fillStyle='#5a3a1a'; ctx.strokeStyle='#111'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(cx+W*0.3, H*0.35, W*0.06, H*0.48, 3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#f5a623';
+  [[H*0.38],[H*0.54],[H*0.7]].forEach(([y])=>{
+    ctx.beginPath(); ctx.roundRect(cx+W*0.28, y, W*0.1, H*0.03, 2); ctx.fill();
+  });
+  // Blade
+  ctx.fillStyle='#e8e8f0'; ctx.strokeStyle='#111'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(cx+W*0.33, H*0.08); ctx.lineTo(cx+W*0.29, H*0.38); ctx.lineTo(cx+W*0.37, H*0.38);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Blade shine
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.beginPath(); ctx.moveTo(cx+W*0.32,H*0.1); ctx.lineTo(cx+W*0.3,H*0.34); ctx.lineTo(cx+W*0.33,H*0.34); ctx.closePath(); ctx.fill();
+  // Guard
+  const guardG = ctx.createLinearGradient(cx+W*0.22, H*0.36, cx+W*0.44, H*0.42);
+  guardG.addColorStop(0,'#d4af37'); guardG.addColorStop(1,'#7a5c00');
+  ctx.fillStyle=guardG;
+  ctx.beginPath(); ctx.roundRect(cx+W*0.22, H*0.36, W*0.22, H*0.07, 4); ctx.fill(); ctx.stroke();
+
+  // ── Arms ──
+  ctx.fillStyle=color; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+  // Left arm
+  ctx.beginPath(); ctx.roundRect(cx-W*0.46, H*0.36, W*0.2, H*0.26, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.12)';
+  ctx.beginPath(); ctx.roundRect(cx-W*0.44, H*0.38, W*0.07, H*0.18, 3); ctx.fill();
+  // Right arm
+  ctx.fillStyle=color; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.roundRect(cx+W*0.26, H*0.36, W*0.2, H*0.26, 6); ctx.fill(); ctx.stroke();
+
+  // ── Shield (left) — anime style ──
+  ctx.save();
+  ctx.strokeStyle='#111'; ctx.lineWidth=3;
+  const shieldPath = ()=>{
+    ctx.beginPath();
+    ctx.moveTo(cx-W*0.52, H*0.4);
+    ctx.lineTo(cx-W*0.27, H*0.4);
+    ctx.lineTo(cx-W*0.27, H*0.65);
+    ctx.lineTo(cx-W*0.395, H*0.75);
+    ctx.lineTo(cx-W*0.52, H*0.65);
+    ctx.closePath();
+  };
+  // Shadow
+  ctx.fillStyle='#7b0f1f'; shieldPath(); ctx.fill();
+  // Base
+  const sg=ctx.createLinearGradient(cx-W*0.52,H*0.4,cx-W*0.27,H*0.75);
+  sg.addColorStop(0,'#ff4466'); sg.addColorStop(0.5,'#cc2244'); sg.addColorStop(1,'#880022');
+  ctx.fillStyle=sg; shieldPath(); ctx.fill(); ctx.stroke();
+  // Highlight
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.beginPath(); ctx.moveTo(cx-W*0.5,H*0.41); ctx.lineTo(cx-W*0.29,H*0.41); ctx.lineTo(cx-W*0.29,H*0.52); ctx.lineTo(cx-W*0.5,H*0.52); ctx.closePath(); ctx.fill();
+  // Emblem circle
+  const em=ctx.createRadialGradient(cx-W*0.395,H*0.565,0,cx-W*0.395,H*0.565,W*0.065);
+  em.addColorStop(0,'rgba(255,220,80,0.9)'); em.addColorStop(1,'rgba(200,140,0,0.4)');
+  ctx.fillStyle=em;
+  ctx.beginPath(); ctx.arc(cx-W*0.395, H*0.565, W*0.065, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ── Neck ──
+  ctx.fillStyle='#f5d5a0'; ctx.strokeStyle='#c4945a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(cx-W*0.09, H*0.28, W*0.18, H*0.08, 4); ctx.fill(); ctx.stroke();
+
+  // ── Head (anime cel-shaded) ──
+  // Shadow pass
+  ctx.fillStyle='#e8b882';
+  ctx.beginPath(); ctx.ellipse(cx, H*0.175, W*0.29, H*0.195, 0, 0, Math.PI*2); ctx.fill();
+  // Base skin
+  const skinG=ctx.createRadialGradient(cx-W*0.06,H*0.11,0,cx,H*0.175,W*0.32);
+  skinG.addColorStop(0,'#fff2e0'); skinG.addColorStop(0.6,'#fce0b0'); skinG.addColorStop(1,'#f0c080');
+  ctx.fillStyle=skinG; ctx.strokeStyle='#222'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(cx, H*0.165, W*0.295, H*0.2, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  // Face shadow (bottom)
+  ctx.fillStyle='rgba(200,130,60,0.18)';
+  ctx.beginPath(); ctx.ellipse(cx, H*0.24, W*0.22, H*0.1, 0, 0, Math.PI*2); ctx.fill();
+
+  // ── Hair (anime style) ──
+  const hairColor = '#180800';
+  ctx.fillStyle=hairColor; ctx.strokeStyle='#000'; ctx.lineWidth=2.5;
+  // Back hair
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.3, H*0.17);
+  ctx.bezierCurveTo(cx-W*0.32, H*0.02, cx-W*0.05, H*-0.01, cx+W*0.05, H*-0.01);
+  ctx.bezierCurveTo(cx+W*0.2, H*-0.01, cx+W*0.3, H*0.05, cx+W*0.3, H*0.17);
+  ctx.bezierCurveTo(cx+W*0.26, H*0.08, cx, H*0.04, cx-W*0.1, H*0.06);
+  ctx.bezierCurveTo(cx-W*0.22, H*0.06, cx-W*0.28, H*0.1, cx-W*0.3, H*0.17);
+  ctx.fill(); ctx.stroke();
+  // Bangs (spiky anime)
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.29, H*0.1);
+  ctx.bezierCurveTo(cx-W*0.25, H*-0.02, cx-W*0.15, H*0.02, cx-W*0.12, H*0.09);
+  ctx.bezierCurveTo(cx-W*0.08, H*0.01, cx-W*0.02, H*0.0, cx+W*0.02, H*0.08);
+  ctx.bezierCurveTo(cx+W*0.06, H*0.01, cx+W*0.12, H*-0.01, cx+W*0.16, H*0.08);
+  ctx.bezierCurveTo(cx+W*0.2, H*0.02, cx+W*0.26, H*0.04, cx+W*0.29, H*0.12);
+  ctx.fill(); ctx.stroke();
+  // Hair highlight streak
+  ctx.fillStyle='rgba(255,255,255,0.22)';
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.12, H*0.0);
+  ctx.bezierCurveTo(cx-W*0.06, H*0.0, cx+W*0.02, H*0.02, cx+W*0.06, H*0.07);
+  ctx.bezierCurveTo(cx+W*0.02, H*0.06, cx-W*0.04, H*0.04, cx-W*0.1, H*0.04);
+  ctx.closePath(); ctx.fill();
+
+  // ── Eyes ──
+  animeEye(ctx, cx-W*0.12, H*0.185, W*0.092, H*0.078, '#3399ff');
+  animeEye(ctx, cx+W*0.12, H*0.185, W*0.092, H*0.078, '#3399ff');
+
+  // ── Eyebrows ──
+  ctx.strokeStyle='#111'; ctx.lineWidth=3.5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-W*0.2,H*0.1); ctx.bezierCurveTo(cx-W*0.14,H*0.09,cx-W*0.08,H*0.1,cx-W*0.04,H*0.115); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+W*0.2,H*0.1); ctx.bezierCurveTo(cx+W*0.14,H*0.09,cx+W*0.08,H*0.1,cx+W*0.04,H*0.115); ctx.stroke();
+
+  // ── Nose ──
+  ctx.strokeStyle='#d4926a'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.02, H*0.24); ctx.bezierCurveTo(cx-W*0.04,H*0.245,cx+W*0.04,H*0.245,cx+W*0.02,H*0.24); ctx.stroke();
+
+  // ── Mouth (smile) ──
+  ctx.strokeStyle='#c87050'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.1,H*0.27); ctx.bezierCurveTo(cx-W*0.04,H*0.305,cx+W*0.04,H*0.305,cx+W*0.1,H*0.27); ctx.stroke();
+
+  // ── Blush ──
+  ctx.fillStyle='rgba(255,120,120,0.22)';
+  ctx.beginPath(); ctx.ellipse(cx-W*0.2,H*0.255,W*0.075,H*0.038,0.3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+W*0.2,H*0.255,W*0.075,H*0.038,-0.3,0,Math.PI*2); ctx.fill();
+  // Blush dots
+  ctx.fillStyle='rgba(255,80,80,0.3)';
+  [-1,0,1].forEach(d=>{ ctx.beginPath(); ctx.arc(cx-W*0.2+d*W*0.025,H*0.258,W*0.008,0,Math.PI*2); ctx.fill(); });
+  [-1,0,1].forEach(d=>{ ctx.beginPath(); ctx.arc(cx+W*0.2+d*W*0.025,H*0.258,W*0.008,0,Math.PI*2); ctx.fill(); });
+}
+
+function lightenColor(hex, amount) {
+  const num = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, (num>>16)+amount);
+  const g = Math.min(255, ((num>>8)&0xff)+amount);
+  const b = Math.min(255, (num&0xff)+amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawMonster(stageIdx) {
+  const canvas = document.getElementById('monsterCanvas');
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2;
+
+  // Anime glow aura behind monster
+  const auraColors=['rgba(255,120,0,0.12)','rgba(180,0,255,0.12)','rgba(0,200,255,0.12)','rgba(0,255,120,0.12)','rgba(255,0,0,0.15)'];
+  const auraG=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.55);
+  auraG.addColorStop(0,auraColors[stageIdx]||auraColors[0]);
+  auraG.addColorStop(1,'transparent');
+  ctx.fillStyle=auraG;
+  ctx.beginPath(); ctx.ellipse(cx,cy,W*0.55,H*0.55,0,0,Math.PI*2); ctx.fill();
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.28)';
+  ctx.beginPath(); ctx.ellipse(cx,H*0.965,W*0.38,H*0.04,0,0,Math.PI*2); ctx.fill();
+
+  const themes=[
+    { body:'#c97010', bodyShadow:'#7a4000', skin:'#f5c070', skinShadow:'#d4904a', eye:'#dd2200', hair:'#3a1800' },
+    { body:'#990000', bodyShadow:'#550000', skin:'#cc4433', skinShadow:'#882222', eye:'#ffcc00', hair:'#1a0000' },
+    { body:'#7700bb', bodyShadow:'#440077', skin:'#ccaadd', skinShadow:'#9966bb', eye:'#00eebb', hair:'#220033' },
+    { body:'#007755', bodyShadow:'#003322', skin:'#44ddaa', skinShadow:'#229977', eye:'#ff44ff', hair:'#001a0e' },
+    { body:'#111144', bodyShadow:'#000022', skin:'#3355aa', skinShadow:'#112266', eye:'#ff2200', hair:'#000008' },
+  ];
+  const t=themes[stageIdx]||themes[0];
+
+  // ── Legs ──
+  const drawLeg=(lx)=>{
+    // Shadow
+    ctx.fillStyle=t.bodyShadow;
+    ctx.beginPath(); ctx.roundRect(lx+W*0.02, H*0.69, W*0.22, H*0.27, [0,0,8,8]); ctx.fill();
+    // Base
+    const lg=ctx.createLinearGradient(lx,H*0.68,lx+W*0.22,H*0.96);
+    lg.addColorStop(0,lightenColor(t.body,20)); lg.addColorStop(1,t.body);
+    ctx.fillStyle=lg; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.roundRect(lx, H*0.68, W*0.22, H*0.27, [0,0,8,8]); ctx.fill(); ctx.stroke();
+    // Highlight
+    ctx.fillStyle='rgba(255,255,255,0.14)';
+    ctx.beginPath(); ctx.roundRect(lx+W*0.02, H*0.7, W*0.08, H*0.16, 3); ctx.fill();
+  };
+  drawLeg(cx-W*0.3); drawLeg(cx+W*0.08);
+
+  // Boots
+  ['#1a1a1a','#2d2d2d'].forEach((bc,bi)=>{
+    const off=bi*0.005;
+    ctx.fillStyle=bc; ctx.strokeStyle='#111'; ctx.lineWidth=bi?0:2.5;
+    ctx.beginPath(); ctx.ellipse(cx-W*0.19+off, H*0.958+off, W*0.18-bi*0.02, H*0.052-bi*0.01, 0.2, 0, Math.PI*2); ctx.fill(); if(!bi) ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx+W*0.19+off, H*0.958+off, W*0.18-bi*0.02, H*0.052-bi*0.01, -0.2, 0, Math.PI*2); ctx.fill(); if(!bi) ctx.stroke();
+  });
+
+  // ── Body (cel-shaded) ──
+  // Shadow body
+  ctx.fillStyle=t.bodyShadow;
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.4, H*0.72); ctx.lineTo(cx-W*0.38, H*0.32);
+  ctx.bezierCurveTo(cx-W*0.3, H*0.24, cx+W*0.3, H*0.24, cx+W*0.38, H*0.32);
+  ctx.lineTo(cx+W*0.4, H*0.72); ctx.closePath(); ctx.fill();
+  // Base body
+  const bodyG=ctx.createLinearGradient(cx-W*0.38,H*0.28,cx+W*0.1,H*0.72);
+  bodyG.addColorStop(0,lightenColor(t.body,25)); bodyG.addColorStop(0.55,t.body); bodyG.addColorStop(1,t.bodyShadow);
+  ctx.fillStyle=bodyG; ctx.strokeStyle='#111'; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.38, H*0.72); ctx.lineTo(cx-W*0.36, H*0.32);
+  ctx.bezierCurveTo(cx-W*0.28, H*0.24, cx+W*0.28, H*0.24, cx+W*0.36, H*0.32);
+  ctx.lineTo(cx+W*0.38, H*0.72); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Body highlight
+  ctx.fillStyle='rgba(255,255,255,0.13)';
+  ctx.beginPath(); ctx.moveTo(cx-W*0.32,H*0.28); ctx.lineTo(cx-W*0.3,H*0.28);
+  ctx.bezierCurveTo(cx-W*0.22,H*0.24,cx+W*0.1,H*0.24,cx+W*0.18,H*0.28);
+  ctx.lineTo(cx+W*0.16,H*0.44); ctx.lineTo(cx-W*0.3,H*0.44); ctx.closePath(); ctx.fill();
+  // Chest detail
+  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.15,H*0.28); ctx.lineTo(cx-W*0.15,H*0.68); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+W*0.15,H*0.28); ctx.lineTo(cx+W*0.15,H*0.68); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-W*0.35,H*0.52); ctx.lineTo(cx+W*0.35,H*0.52); ctx.stroke();
+
+  // ── Arms ──
+  const drawArm=(side)=>{
+    const sx=side<0?cx-W*0.38:cx+W*0.38;
+    ctx.fillStyle=t.bodyShadow;
+    ctx.beginPath(); ctx.moveTo(sx,H*0.35); ctx.bezierCurveTo(sx+side*W*0.22,H*0.27,sx+side*W*0.3,H*0.52,sx+side*W*0.2,H*0.68);
+    ctx.bezierCurveTo(sx+side*W*0.1,H*0.72,sx,H*0.64,sx,H*0.52); ctx.closePath(); ctx.fill();
+    const ag=ctx.createLinearGradient(sx,H*0.3,sx+side*W*0.28,H*0.65);
+    ag.addColorStop(0,lightenColor(t.body,20)); ag.addColorStop(1,t.body);
+    ctx.fillStyle=ag; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(sx,H*0.34); ctx.bezierCurveTo(sx+side*W*0.2,H*0.26,sx+side*W*0.28,H*0.5,sx+side*W*0.18,H*0.67);
+    ctx.bezierCurveTo(sx+side*W*0.08,H*0.71,sx-side*W*0.02,H*0.63,sx,H*0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+  };
+  drawArm(-1); drawArm(1);
+
+  // ── Stage-specific weapon ──
+  ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+  if(stageIdx===0){
+    // 官印 (stamp)
+    const stampG=ctx.createLinearGradient(cx+W*0.5,H*0.08,cx+W*0.65,H*0.7);
+    stampG.addColorStop(0,'#aaa'); stampG.addColorStop(1,'#666');
+    ctx.fillStyle=stampG; ctx.beginPath(); ctx.roundRect(cx+W*0.52,H*0.18,W*0.1,H*0.52,3); ctx.fill(); ctx.stroke();
+    const hG=ctx.createLinearGradient(cx+W*0.48,H*0.08,cx+W*0.68,H*0.2);
+    hG.addColorStop(0,'#f5c842'); hG.addColorStop(1,'#b8860b');
+    ctx.fillStyle=hG; ctx.beginPath(); ctx.roundRect(cx+W*0.48,H*0.08,W*0.16,H*0.13,5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#c00'; ctx.font=`bold ${W*0.07}px serif`;
+    ctx.textAlign='center'; ctx.fillText('官',cx+W*0.57,H*0.18);
+  } else if(stageIdx===1){
+    // 大刀
+    ctx.fillStyle='#c8c8d8';
+    ctx.beginPath(); ctx.moveTo(cx+W*0.56,H*0.03); ctx.lineTo(cx+W*0.65,H*0.3); ctx.lineTo(cx+W*0.47,H*0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.moveTo(cx+W*0.56,H*0.05); ctx.lineTo(cx+W*0.51,H*0.27); ctx.lineTo(cx+W*0.54,H*0.27); ctx.closePath(); ctx.fill();
+    const handleG=ctx.createLinearGradient(cx+W*0.53,H*0.3,cx+W*0.62,H*0.76);
+    handleG.addColorStop(0,'#8b4513'); handleG.addColorStop(1,'#4a200a');
+    ctx.fillStyle=handleG; ctx.beginPath(); ctx.roundRect(cx+W*0.54,H*0.29,W*0.07,H*0.47,3); ctx.fill(); ctx.stroke();
+    const gG=ctx.createLinearGradient(cx+W*0.44,H*0.27,cx+W*0.68,H*0.35);
+    gG.addColorStop(0,'#ffd700'); gG.addColorStop(1,'#8b6914');
+    ctx.fillStyle=gG; ctx.beginPath(); ctx.roundRect(cx+W*0.44,H*0.27,W*0.24,H*0.08,4); ctx.fill(); ctx.stroke();
+  } else if(stageIdx===4){
+    // 黑暗權杖
+    const staffG=ctx.createLinearGradient(cx+W*0.55,H*0.05,cx+W*0.62,H*0.72);
+    staffG.addColorStop(0,'#666'); staffG.addColorStop(1,'#333');
+    ctx.fillStyle=staffG; ctx.beginPath(); ctx.roundRect(cx+W*0.55,H*0.14,W*0.07,H*0.58,4); ctx.fill(); ctx.stroke();
+    // Orb
+    const orbG=ctx.createRadialGradient(cx+W*0.565,H*0.1,0,cx+W*0.585,H*0.12,W*0.09);
+    orbG.addColorStop(0,'#ff8866'); orbG.addColorStop(0.5,'#cc2200'); orbG.addColorStop(1,'#660000');
+    ctx.fillStyle=orbG; ctx.beginPath(); ctx.arc(cx+W*0.585,H*0.12,W*0.08,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // Glow
+    ctx.fillStyle='rgba(255,60,0,0.3)'; ctx.beginPath(); ctx.arc(cx+W*0.585,H*0.12,W*0.13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.ellipse(cx+W*0.56,H*0.095,W*0.03,H*0.022,-0.4,0,Math.PI*2); ctx.fill();
+  } else if(stageIdx===2){
+    // 玉笏
+    const hG2=ctx.createLinearGradient(cx+W*0.5,H*0.1,cx+W*0.65,H*0.68);
+    hG2.addColorStop(0,'#e8f4e8'); hG2.addColorStop(1,'#88bb88');
+    ctx.fillStyle=hG2; ctx.beginPath();
+    ctx.moveTo(cx+W*0.56,H*0.08); ctx.lineTo(cx+W*0.62,H*0.12); ctx.lineTo(cx+W*0.62,H*0.68);
+    ctx.lineTo(cx+W*0.52,H*0.68); ctx.lineTo(cx+W*0.52,H*0.12); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.roundRect(cx+W*0.53,H*0.12,W*0.04,H*0.5,2); ctx.fill();
+  }
+
+  // ── Head ──
+  // Shadow head
+  ctx.fillStyle=t.skinShadow;
+  ctx.beginPath(); ctx.ellipse(cx+W*0.03, H*0.215, W*0.34, H*0.225, 0, 0, Math.PI*2); ctx.fill();
+  // Base head
+  const hG2=ctx.createRadialGradient(cx-W*0.06,H*0.14,0,cx,H*0.215,W*0.38);
+  hG2.addColorStop(0,lightenColor(t.skin,40)); hG2.addColorStop(0.6,t.skin); hG2.addColorStop(1,t.skinShadow);
+  ctx.fillStyle=hG2; ctx.strokeStyle='#111'; ctx.lineWidth=3.5;
+  ctx.beginPath(); ctx.ellipse(cx, H*0.21, W*0.34, H*0.22, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  // Face cel-shadow (bottom)
+  ctx.fillStyle='rgba(0,0,0,0.12)';
+  ctx.beginPath(); ctx.ellipse(cx, H*0.295, W*0.26, H*0.1, 0, 0, Math.PI*2); ctx.fill();
+
+  // ── Stage-specific headgear ──
+  ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+  if(stageIdx===0){
+    // 烏紗帽
+    const hatG=ctx.createLinearGradient(cx-W*0.25,H*0.02,cx+W*0.25,H*0.08);
+    hatG.addColorStop(0,'#2a2a2a'); hatG.addColorStop(1,'#111');
+    ctx.fillStyle=hatG;
+    ctx.beginPath(); ctx.roundRect(cx-W*0.3,H*0.03,W*0.6,H*0.09,4); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(cx-W*0.2,H*0.0,W*0.4,H*0.07,[4,4,0,0]); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.roundRect(cx-W*0.18,H*0.01,W*0.36,H*0.025,3); ctx.fill();
+    // Wings of hat
+    [[-1],[1]].forEach(([s])=>{
+      ctx.fillStyle='#1a1a1a'; ctx.beginPath();
+      ctx.ellipse(cx+s*W*0.42,H*0.065,W*0.14,H*0.04,s*0.3,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    });
+  } else if(stageIdx===1){
+    // 頭盔
+    const helmG=ctx.createLinearGradient(cx-W*0.28,H*0.0,cx+W*0.28,H*0.15);
+    helmG.addColorStop(0,'#c8a020'); helmG.addColorStop(0.5,'#8b6914'); helmG.addColorStop(1,'#554400');
+    ctx.fillStyle=helmG;
+    ctx.beginPath(); ctx.ellipse(cx,H*0.1,W*0.32,H*0.16,0,Math.PI,Math.PI*2); ctx.fill(); ctx.stroke();
+    // Crest
+    ctx.fillStyle='#cc0000';
+    ctx.beginPath(); ctx.moveTo(cx-W*0.06,H*-0.01); ctx.lineTo(cx+W*0.06,H*-0.01); ctx.lineTo(cx+W*0.03,H*0.08); ctx.lineTo(cx-W*0.03,H*0.08); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Highlight
+    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.ellipse(cx-W*0.1,H*0.08,W*0.1,H*0.045,-0.3,0,Math.PI*2); ctx.fill();
+  } else if(stageIdx===2||stageIdx===3){
+    // 犄角
+    const hornC=stageIdx===2?'#9900dd':'#00bb66';
+    const hornSC=stageIdx===2?'#550077':'#007744';
+    [-1,1].forEach(s=>{
+      ctx.fillStyle=hornSC;
+      ctx.beginPath(); ctx.moveTo(cx+s*W*0.22,H*0.04); ctx.lineTo(cx+s*W*0.36,H*-0.04); ctx.lineTo(cx+s*W*0.16,H*0.12); ctx.closePath(); ctx.fill();
+      const hornG=ctx.createLinearGradient(cx+s*W*0.15,H*0.0,cx+s*W*0.35,H*0.1);
+      hornG.addColorStop(0,lightenColor(hornC,20)); hornG.addColorStop(1,hornC);
+      ctx.fillStyle=hornG; ctx.strokeStyle='#111'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx+s*W*0.2,H*0.04); ctx.lineTo(cx+s*W*0.34,H*-0.03); ctx.lineTo(cx+s*W*0.14,H*0.12); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.moveTo(cx+s*W*0.22,H*0.04); ctx.lineTo(cx+s*W*0.28,H*0.0); ctx.lineTo(cx+s*W*0.18,H*0.1); ctx.closePath(); ctx.fill();
+    });
+  } else if(stageIdx===4){
+    // 惡魔王冠
+    const crownG=ctx.createLinearGradient(cx-W*0.28,H*0.0,cx+W*0.28,H*0.14);
+    crownG.addColorStop(0,'#ff6600'); crownG.addColorStop(0.5,'#cc2200'); crownG.addColorStop(1,'#660000');
+    ctx.fillStyle=crownG; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx-W*0.28,H*0.12); ctx.lineTo(cx-W*0.22,H*-0.01); ctx.lineTo(cx-W*0.1,H*0.1);
+    ctx.lineTo(cx,H*-0.02); ctx.lineTo(cx+W*0.1,H*0.1); ctx.lineTo(cx+W*0.22,H*-0.01);
+    ctx.lineTo(cx+W*0.28,H*0.12); ctx.lineTo(cx+W*0.28,H*0.16); ctx.lineTo(cx-W*0.28,H*0.16);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    [['#ff0000',cx-W*0.14,H*0.09],['#ff8800',cx,H*0.07],['#ff0088',cx+W*0.14,H*0.09]].forEach(([gc,gx,gy])=>{
+      const gemG=ctx.createRadialGradient(gx-W*0.01,gy-H*0.01,0,gx,gy,W*0.038);
+      gemG.addColorStop(0,'#fff'); gemG.addColorStop(0.3,gc); gemG.addColorStop(1,darkenColor(gc,40));
+      ctx.fillStyle=gemG; ctx.beginPath(); ctx.arc(gx,gy,W*0.038,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    });
+    // Glow
+    ctx.fillStyle='rgba(255,80,0,0.15)'; ctx.beginPath(); ctx.ellipse(cx,H*0.08,W*0.32,H*0.14,0,0,Math.PI*2); ctx.fill();
+  }
+
+  // ── Hair ──
+  ctx.fillStyle=t.hair; ctx.strokeStyle='#000'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.34, H*0.18);
+  ctx.bezierCurveTo(cx-W*0.36, H*0.05, cx-W*0.08, H*0.0, cx, H*0.01);
+  ctx.bezierCurveTo(cx+W*0.08, H*0.0, cx+W*0.34, H*0.05, cx+W*0.34, H*0.18);
+  ctx.bezierCurveTo(cx+W*0.26, H*0.1, cx, H*0.06, cx-W*0.26, H*0.1);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Hair highlight
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath(); ctx.moveTo(cx-W*0.1,H*0.03); ctx.bezierCurveTo(cx,H*0.01,cx+W*0.08,H*0.03,cx+W*0.12,H*0.09);
+  ctx.bezierCurveTo(cx+W*0.04,H*0.07,cx-W*0.04,H*0.06,cx-W*0.08,H*0.07); ctx.closePath(); ctx.fill();
+
+  // ── Eyes (anime monster) ──
+  const eyePositions=[[cx-W*0.145, H*0.235],[cx+W*0.145, H*0.235]];
+  eyePositions.forEach(([ex,ey],ei)=>{
+    // Glow halo
+    const glowG=ctx.createRadialGradient(ex,ey,0,ex,ey,W*0.14);
+    glowG.addColorStop(0,t.eye+'88'); glowG.addColorStop(1,'transparent');
+    ctx.fillStyle=glowG; ctx.beginPath(); ctx.ellipse(ex,ey,W*0.14,H*0.12,0,0,Math.PI*2); ctx.fill();
+    // Sclera
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.ellipse(ex,ey,W*0.1,H*0.088,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // Iris
+    const iG=ctx.createRadialGradient(ex,ey-H*0.01,0,ex,ey,W*0.075);
+    iG.addColorStop(0,lightenColor(t.eye,50)); iG.addColorStop(0.4,t.eye); iG.addColorStop(1,darkenColor(t.eye,30));
+    ctx.fillStyle=iG; ctx.beginPath(); ctx.ellipse(ex,ey,W*0.075,H*0.065,0,0,Math.PI*2); ctx.fill();
+    // Slit pupil (demonic)
+    ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(ex,ey,W*0.022,H*0.058,0,0,Math.PI*2); ctx.fill();
+    // Highlights
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(ex-W*0.033,ey-H*0.028,W*0.026,H*0.023,-0.4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.ellipse(ex+W*0.022,ey+H*0.02,W*0.012,H*0.012,0,0,Math.PI*2); ctx.fill();
+    // Lash line
+    ctx.strokeStyle='#000'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(ex-W*0.1,ey-H*0.03); ctx.bezierCurveTo(ex-W*0.04,ey-H*0.12,ex+W*0.04,ey-H*0.12,ex+W*0.1,ey-H*0.03); ctx.stroke();
+  });
+
+  // ── Eyebrows (angry) ──
+  ctx.strokeStyle='#111'; ctx.lineWidth=4.5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-W*0.285,H*0.145); ctx.bezierCurveTo(cx-W*0.2,H*0.155,cx-W*0.1,H*0.165,cx-W*0.055,H*0.18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+W*0.285,H*0.145); ctx.bezierCurveTo(cx+W*0.2,H*0.155,cx+W*0.1,H*0.165,cx+W*0.055,H*0.18); ctx.stroke();
+
+  // ── Nose ──
+  ctx.strokeStyle=t.skinShadow; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx-W*0.04,H*0.298); ctx.bezierCurveTo(cx-W*0.065,H*0.308,cx+W*0.065,H*0.308,cx+W*0.04,H*0.298); ctx.stroke();
+
+  // ── Mouth (menacing) ──
+  ctx.fillStyle='#111'; ctx.strokeStyle='#111'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx-W*0.22,H*0.335);
+  ctx.bezierCurveTo(cx-W*0.16,H*0.42,cx+W*0.16,H*0.42,cx+W*0.22,H*0.335);
+  ctx.lineTo(cx+W*0.2,H*0.35);
+  ctx.bezierCurveTo(cx+W*0.12,H*0.41,cx-W*0.12,H*0.41,cx-W*0.2,H*0.35);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Teeth (sharp)
+  ctx.fillStyle='#f8f8f8'; ctx.strokeStyle='#bbb'; ctx.lineWidth=1;
+  const teethX=[cx-W*0.14,cx-W*0.05,cx+W*0.05,cx+W*0.14];
+  teethX.forEach(tx=>{
+    ctx.beginPath(); ctx.moveTo(tx-W*0.04,H*0.34); ctx.lineTo(tx+W*0.04,H*0.34); ctx.lineTo(tx,H*0.41); ctx.closePath(); ctx.fill(); ctx.stroke();
+  });
+  // Tongue
+  ctx.fillStyle='#dd3344';
+  ctx.beginPath(); ctx.ellipse(cx,H*0.405,W*0.09,H*0.04,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.ellipse(cx-W*0.02,H*0.398,W*0.04,H*0.018,0,0,Math.PI*2); ctx.fill();
+
+  // ── Stage-specific face details ──
+  if(stageIdx===0){
+    // 鬍鬚 (fat mustache)
+    ctx.fillStyle='#2a1000'; ctx.strokeStyle='#000'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(cx-W*0.1,H*0.305,W*0.1,H*0.04,0.2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx+W*0.1,H*0.305,W*0.1,H*0.04,-0.2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // 肥胖臉頰紅暈
+    ctx.fillStyle='rgba(220,100,60,0.25)';
+    ctx.beginPath(); ctx.ellipse(cx-W*0.23,H*0.27,W*0.1,H*0.055,0.3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+W*0.23,H*0.27,W*0.1,H*0.055,-0.3,0,Math.PI*2); ctx.fill();
+  } else if(stageIdx===4){
+    // 傷疤
+    ctx.strokeStyle='rgba(200,50,50,0.7)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(cx+W*0.12,H*0.15); ctx.lineTo(cx+W*0.24,H*0.3); ctx.stroke();
+    ctx.strokeStyle='rgba(255,100,100,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx+W*0.13,H*0.15); ctx.lineTo(cx+W*0.25,H*0.3); ctx.stroke();
+  }
+}
+
+// ── 老師控制按鈕 ──
+window.startVoting = async function() {
+  const timerEnd = Date.now() + 30000;
+  await remove(ref(db, 'ballots'));
+  await update(ref(db, 'game'), {
+    status: 'voting',
+    stage: currentStage + 1,
+    question_index: currentQ,
+    timer_end: timerEnd
+  });
+  document.getElementById('dmgInfoSection').style.display = 'none';
+};
+
+window.stopVoting = async function() {
+  if (timerInterval) clearInterval(timerInterval);
+  await update(ref(db, 'game'), { status: 'stopped' });
+  setButtons('stopped');
+  document.getElementById('btnReveal').disabled = false;
+};
+
+window.revealAnswer = async function() {
+  const snap = await get(ref(db, 'ballots'));
+  const ballots = snap.val() || {};
+  const q = STAGES[currentStage].questions[currentQ];
+  const isDiscussion = q.answer === -1;
+
+  // 統計各組答對率
+  const groupVotes = { A:{correct:0,total:0}, B:{correct:0,total:0}, C:{correct:0,total:0} };
+  Object.values(ballots).forEach(b => {
+    const g = b.group;
+    if (!groupVotes[g]) return;
+    groupVotes[g].total++;
+    if (isDiscussion || b.answer === q.answer) groupVotes[g].correct++;
+  });
+
+  // 計算傷害
+  const damages = {};
+  let totalDmg = 0;
+  Object.entries(groupVotes).forEach(([g, v]) => {
+    const dmg = v.total > 0 ? Math.round(v.correct / v.total * 100) : 0;
+    damages[g] = dmg;
+    totalDmg += dmg;
+  });
+  const avgDmg = Math.round(totalDmg / 3);
+
+  // 怪物扣血
+  const newMonsterHp = Math.max(0, monsterHp - avgDmg);
+
+  // 各組被反擊（答對率 < 30%）
+  const groupUpdates = {};
+  Object.entries(groupVotes).forEach(([g, v]) => {
+    const rate = v.total > 0 ? v.correct / v.total : 0;
+    const newHp = rate < 0.3 ? Math.max(0, groupHps[g] - 10) : groupHps[g];
+    groupUpdates[`groups/${g}/hp`] = newHp;
+  });
+
+  await update(ref(db, '/'), {
+    'game/status': 'revealed',
+    'game/monster_hp': newMonsterHp,
+    'game/last_damage': damages,
+    ...groupUpdates
+  });
+
+  // Popup 動畫
+  showDamagePopup(`-${avgDmg}`);
+};
+
+window.nextQ = async function() {
+  const nextIdx = currentQ + 1;
+  if (nextIdx >= 5) {
+    // 這一關結束
+    document.getElementById('btnNextStg').style.display = 'inline-block';
+    document.getElementById('btnNext').style.display = 'none';
+    return;
+  }
+  await update(ref(db, 'game'), {
+    status: 'idle',
+    question_index: nextIdx
+  });
+  document.getElementById('dmgInfoSection').style.display = 'none';
+  document.getElementById('optionsRow').innerHTML = '';
+};
+
+window.prevQ = async function() {
+  const prevIdx = Math.max(0, currentQ - 1);
+  await update(ref(db, 'game'), { status:'idle', question_index:prevIdx });
+};
+
+window.nextStage = async function() {
+  const nextStageIdx = currentStage + 1;
+  if (nextStageIdx >= 5) {
+    await update(ref(db, 'game'), { status:'ended' });
+    return;
+  }
+  const nextStage = STAGES[nextStageIdx];
+  await update(ref(db, 'game'), {
+    status: 'idle',
+    stage: nextStageIdx + 1,
+    question_index: 0,
+    monster_hp: nextStage.monster.maxHp,
+    monster_max_hp: nextStage.monster.maxHp
+  });
+  document.getElementById('btnNextStg').style.display = 'none';
+  document.getElementById('btnNext').style.display = 'inline-block';
+  document.getElementById('dmgInfoSection').style.display = 'none';
+  document.getElementById('optionsRow').innerHTML = '';
+};
+
+function showDamagePopup(text) {
+  const arena = document.querySelector('.arena');
+  // 主傷害數字
+  const pop = document.createElement('div');
+  pop.className = 'dmg-popup';
+  pop.textContent = text;
+  pop.style.top  = `${25 + Math.random()*15}%`;
+  pop.style.left = `${30 + Math.random()*25}%`;
+  arena.appendChild(pop);
+  setTimeout(() => pop.remove(), 1900);
+
+  // 漫畫音效文字
+  const sfx = ['BOOM!','CRACK!','POW!','SLASH!','HIT!'][Math.floor(Math.random()*5)];
+  const sfxEl = document.createElement('div');
+  sfxEl.textContent = sfx;
+  sfxEl.style.cssText = `
+    position:absolute; pointer-events:none; z-index:11;
+    top:${45+Math.random()*10}%; left:${20+Math.random()*30}%;
+    font-family:'Press Start 2P',monospace; font-size:20px;
+    color:#e94560; -webkit-text-stroke:3px #000;
+    paint-order:stroke fill;
+    animation: dmgFloat 1.4s ease-out forwards;
+    transform: rotate(${-15+Math.random()*30}deg);
+  `;
+  arena.appendChild(sfxEl);
+  setTimeout(() => sfxEl.remove(), 1500);
+}
+
+// ── QR Code ──
+function generateQR() {
+  const studentUrl = window.location.href.replace('teacher.html','student.html');
+  document.getElementById('qrUrl').textContent = studentUrl;
+  try {
+    new QRCode(document.getElementById('qrCanvas'), {
+      text: studentUrl,
+      width: 120,
+      height: 120,
+      colorDark: '#000',
+      colorLight: '#fff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    // qrcode.js 可能無法在 module 環境使用，改用 canvas 繪製簡單提示
+    const ctx = document.getElementById('qrCanvas').getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,120,120);
+    ctx.fillStyle = '#333';
+    ctx.font = '9px monospace';
+    ctx.fillText('QR Code', 30, 60);
+    ctx.fillText('部署後顯示', 20, 75);
+  }
+}
+
+function renderAll() {
+  updateStageUI();
+  renderGroups({ A:{hp:100,maxHp:100}, B:{hp:100,maxHp:100}, C:{hp:100,maxHp:100} });
+  renderVotes({});
+  generateQR();
+}
+
+// 啟動：先載入自訂題目，再判斷是否需要初始化
+loadCustomQuestions().then(async () => {
+  const snap = await get(ref(db, 'game'));
+  if (!snap.val()) {
+    // Firebase 沒有資料才初始化（避免每次重整都重置遊戲）
+    await initGame();
+  } else {
+    // 已有遊戲資料，只渲染 UI
+    renderAll();
+  }
+});
+</script>
+</body>
+</html>

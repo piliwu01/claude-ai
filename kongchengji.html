@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>空城計 RPG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: #0d0d0d;
+      color: #f0e6d3;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    #app {
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    .scene-img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      border-bottom: 3px solid #8b1a1a;
+    }
+
+    .dialog-box {
+      background: rgba(10, 5, 0, 0.92);
+      border: 2px solid #8b1a1a;
+      border-radius: 4px;
+      padding: 20px 24px;
+      position: relative;
+    }
+
+    .dialog-box::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px; right: -2px; bottom: -2px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #8b1a1a33, transparent 60%);
+      pointer-events: none;
+    }
+
+    .speaker-tag {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c8963e;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .dialog-text {
+      font-size: 17px;
+      line-height: 1.9;
+      color: #f0e6d3;
+    }
+
+    .narration-text {
+      font-size: 15px;
+      line-height: 1.9;
+      color: #b8a898;
+      font-style: italic;
+    }
+
+    .choice-btn {
+      background: rgba(20, 10, 0, 0.9);
+      border: 1.5px solid #5c3a1e;
+      border-radius: 3px;
+      padding: 14px 18px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 15px;
+      color: #e8d5b0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .choice-btn::before {
+      content: '▶';
+      color: #8b1a1a;
+      margin-right: 10px;
+      font-size: 11px;
+    }
+
+    .choice-btn:hover {
+      background: rgba(139, 26, 26, 0.25);
+      border-color: #8b1a1a;
+      color: #fff;
+      transform: translateX(4px);
+      box-shadow: -3px 0 0 #8b1a1a;
+    }
+
+    .choice-btn:active {
+      transform: translateX(6px) scale(0.99);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in { animation: fadeInUp 0.4s ease forwards; }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .flash { animation: flash 0.6s ease 2; }
+
+    .title-screen {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title-bg {
+      position: absolute;
+      inset: 0;
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+      opacity: 0.55;
+    }
+
+    .title-overlay {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+    }
+
+    .title-main {
+      font-size: 62px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 30px #8b1a1a, 2px 2px 0 #3e0000, 4px 4px 0 #1a0000;
+      letter-spacing: 12px;
+      margin-bottom: 8px;
+    }
+
+    .title-sub {
+      font-size: 18px;
+      color: #c8963e;
+      letter-spacing: 6px;
+      margin-bottom: 48px;
+    }
+
+    .start-btn {
+      background: #8b1a1a;
+      color: #fff;
+      border: 2px solid #c8963e;
+      padding: 14px 48px;
+      font-size: 18px;
+      font-family: 'Noto Serif TC', serif;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 2px;
+    }
+
+    .start-btn:hover {
+      background: #a52020;
+      box-shadow: 0 0 20px rgba(200, 150, 62, 0.5);
+      transform: scale(1.04);
+    }
+
+    .char-card {
+      background: rgba(10,5,0,0.85);
+      border: 2px solid #5c3a1e;
+      border-radius: 6px;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      overflow: hidden;
+    }
+
+    .char-card:hover {
+      border-color: #c8963e;
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(200, 150, 62, 0.3);
+    }
+
+    .char-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      object-position: top;
+    }
+
+    .char-info {
+      padding: 16px;
+    }
+
+    .hp-bar-bg {
+      background: #2a1a1a;
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .hp-bar {
+      background: linear-gradient(90deg, #8b1a1a, #e53e3e);
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+
+    .ending-box {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .ending-title {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      margin-bottom: 16px;
+    }
+
+    .tag-success { color: #f0c040; text-shadow: 0 0 15px #f0c040; }
+    .tag-partial { color: #70b8ff; text-shadow: 0 0 15px #70b8ff; }
+    .tag-fail    { color: #ff6060; text-shadow: 0 0 15px #ff6060; }
+
+    .lesson-box {
+      background: rgba(200, 150, 62, 0.08);
+      border-left: 3px solid #c8963e;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #d4b896;
+      text-align: left;
+    }
+
+    .replay-btn {
+      background: transparent;
+      border: 1.5px solid #c8963e;
+      color: #c8963e;
+      padding: 10px 32px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 15px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+      border-radius: 2px;
+      margin: 4px;
+    }
+
+    .replay-btn:hover {
+      background: rgba(200, 150, 62, 0.15);
+    }
+
+    .scroll-indicator {
+      font-size: 12px;
+      color: #5c4033;
+      text-align: center;
+      padding: 6px;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── 所有圖片路徑（對應生成的檔案）──
+const IMG = {
+  title:    'kongchengji_title_20260429_093759.png',
+  zhuge:    'kongchengji_zhugeliang_20260429_093800.png',
+  simayi:   'kongchengji_simayi_20260429_093745.png',
+  empty:    'kongchengji_empty_20260429_093835.png',
+  victory:  'kongchengji_victory_20260429_093840.png',
+  defeat:   'kongchengji_defeat_20260429_093837.png',
+};
+
+// ── 故事資料 ──
+// 每個節點格式：
+// { id, image, speaker, lines[], choices[], next(直接跳) }
+const STORY = {
+
+  // ───── 標題 / 選角 ─────
+  'title': {
+    type: 'title'
+  },
+  'select': {
+    type: 'select'
+  },
+
+  // ═══════════════════════════════
+  //  諸葛亮路線
+  // ═══════════════════════════════
+
+  'z1': {
+    image: IMG.zhuge,
+    lines: [
+      { speaker: '探子', text: '丞相！不好了！司馬懿率十五萬大軍，距西城不足二十里！' },
+      { speaker: '旁白', text: '西城之內，只剩兩千五百名老弱士兵，大將皆不在身旁。若就此交戰，無異以卵擊石。' },
+      { speaker: '諸葛亮', text: '……（閉目片刻）' },
+    ],
+    choices: [
+      { text: '「立刻緊閉城門，死守到底！」', next: 'z_fail_defend' },
+      { text: '「備馬！棄城突圍！」', next: 'z_fail_flee' },
+      { text: '「來人——大開四門！命士兵換上百姓服裝掃街！我親自登上城樓！」', next: 'z2' },
+    ]
+  },
+
+  'z_fail_defend': {
+    image: IMG.defeat,
+    lines: [
+      { speaker: '旁白', text: '城門緊閉，司馬懿見狀，立刻命令強攻。兩千士兵寡不敵眾，西城很快陷落。' },
+      { speaker: '司馬懿', text: '城門關閉，說明城內有防守意識。正面破城。' },
+    ],
+    ending: 'fail',
+    endingTitle: '城破，北伐失敗',
+    lesson: '諸葛亮的厲害之處，不在於「守」，而在於讓敵人「不敢攻」。關上城門，等於承認了弱點。',
+  },
+
+  'z_fail_flee': {
+    image: IMG.defeat,
+    lines: [
+      { speaker: '旁白', text: '夜色中，蜀軍隊伍被司馬懿的斥候發現，大軍急追。' },
+      { speaker: '司馬懿', text: '諸葛亮棄城逃跑？追！絕不能讓他重整旗鼓！' },
+    ],
+    ending: 'fail',
+    endingTitle: '突圍失敗，全軍覆沒',
+    lesson: '空城計的精髓，是「以心理攻心理」。逃跑只會讓敵人確認你是弱勢。',
+  },
+
+  'z2': {
+    image: IMG.empty,
+    lines: [
+      { speaker: '旁白', text: '城門大開，幾名「百姓」在城外悠閒掃街。城樓上，諸葛亮焚香撫琴，身旁只有兩名書童。' },
+      { speaker: '旁白', text: '司馬懿大軍已列陣城外，旌旗蔽日，殺氣逼人。' },
+      { speaker: '諸葛亮', text: '（心中獨白）司馬懿啊司馬懿，你一生謹慎，這正是我的底氣所在……' },
+    ],
+    choices: [
+      { text: '彈得更大聲！讓他們清楚聽到！', next: 'z3_partial' },
+      { text: '神色自若，悠然撫琴，彷彿什麼事都沒發生。', next: 'z3_good' },
+      { text: '叫書童端茶，從從容容地喝茶。', next: 'z3_good' },
+    ]
+  },
+
+  'z3_partial': {
+    image: IMG.zhuge,
+    lines: [
+      { speaker: '司馬懿', text: '……琴聲偏急。難道是刻意製造鎮定的假象？' },
+      { speaker: '司馬昭', text: '父親，要不要直接攻？' },
+      { speaker: '司馬懿', text: '……（遲疑）諸葛亮一生不曾弄險。但這琴聲……罷了，寧可信其有。撤！' },
+    ],
+    ending: 'partial',
+    endingTitle: '空城計勉強成功',
+    lesson: '空城計的關鍵是「極度從容」。若刻意表現鎮定，反而會讓敵人起疑。真正的膽識，是連緊張都藏得滴水不漏。',
+  },
+
+  'z3_good': {
+    image: IMG.victory,
+    lines: [
+      { speaker: '司馬懿', text: '……（勒馬，凝視良久）' },
+      { speaker: '司馬昭', text: '父親！城內空虛，可以攻！' },
+      { speaker: '司馬懿', text: '住口。諸葛亮一生謹慎，從不弄險。此城，必有伏兵。撤退！' },
+      { speaker: '旁白', text: '十五萬大軍，就這樣，退了。' },
+      { speaker: '諸葛亮', text: '（望著退去的大軍，緩緩呼出一口氣）……好險。' },
+    ],
+    ending: 'success',
+    endingTitle: '空城計，大成功！',
+    lesson: '諸葛亮事後說：「司馬懿知我謹慎，才會疑我。若換了旁人，早就攻城了。」\n\n——空城計是一場心理戰。諸葛亮賭的，是對司馬懿個性的深刻了解。',
+  },
+
+  // ═══════════════════════════════
+  //  司馬懿路線
+  // ═══════════════════════════════
+
+  's1': {
+    image: IMG.simayi,
+    lines: [
+      { speaker: '斥候', text: '大都督！西城城門大開，只見幾名百姓在掃街，城樓上有一人撫琴，神色自若。' },
+      { speaker: '旁白', text: '你率十五萬大軍。對方城內看似空虛，這是千載難逢的機會。\n但——諸葛亮此人，一生謹慎，從不弄險。' },
+      { speaker: '司馬懿', text: '……（凝視城樓）' },
+    ],
+    choices: [
+      { text: '「直接攻城！兵貴神速！」', next: 's_fail_attack' },
+      { text: '「先撤十里，觀察動靜。」', next: 's2_retreat' },
+      { text: '「派先鋒小隊入城試探。」', next: 's2_probe' },
+    ]
+  },
+
+  's_fail_attack': {
+    image: IMG.defeat,
+    lines: [
+      { speaker: '旁白', text: '大軍衝入城中，城內果然空曠——但四周山中突然號角大響，旌旗搖動，喊殺聲四起。' },
+      { speaker: '司馬懿', text: '有——有埋伏！快退！快退！' },
+      { speaker: '旁白', text: '（其實那只是諸葛亮的疑兵之計，旗幟後根本沒有多少士兵。但你嚇到了。）' },
+    ],
+    ending: 'fail',
+    endingTitle: '中計，損兵折將',
+    lesson: '「疑兵之計」之所以有效，是因為攻擊方在不確定的情況下，會本能地過度解讀訊號。\n司馬懿的謹慎，在這裡反而救了他。但你選擇了魯莽。',
+  },
+
+  's2_retreat': {
+    image: IMG.simayi,
+    lines: [
+      { speaker: '司馬昭', text: '父親，城內空虛，為何要撤？' },
+      { speaker: '司馬懿', text: '諸葛亮從不冒險。城門大開，必有文章。' },
+      { speaker: '司馬昭', text: '可若真的是空城呢？我們錯失良機——' },
+      { speaker: '司馬懿', text: '……' },
+    ],
+    choices: [
+      { text: '「他一生謹慎，城內必有埋伏！繼續撤！」', next: 's_end_fooled' },
+      { text: '「昭兒說得有道理……再派人試探看看。」', next: 's3_see_through' },
+    ]
+  },
+
+  's2_probe': {
+    image: IMG.empty,
+    lines: [
+      { speaker: '旁白', text: '先鋒小隊謹慎入城，確認城內兵力極少，回報：「城內空虛，確為空城！」' },
+      { speaker: '司馬懿', text: '……（沉默許久）' },
+      { speaker: '司馬昭', text: '父親！確認了！可以攻！' },
+    ],
+    choices: [
+      { text: '「即使如此……全軍撤退。」', next: 's_end_yangkou' },
+      { text: '「攻城！活捉諸葛亮！」', next: 's_end_capture' },
+    ]
+  },
+
+  's_end_fooled': {
+    image: IMG.victory,
+    lines: [
+      { speaker: '旁白', text: '司馬懿撤軍。事後得知，西城確實是空城。' },
+      { speaker: '司馬懿', text: '……（苦笑）諸葛亮，你賭的，正是我的謹慎。' },
+    ],
+    ending: 'partial',
+    endingTitle: '中了空城計，但保住了全軍',
+    lesson: '諸葛亮「以己之長，攻敵之短」——他利用司馬懿過於謹慎的個性，成功脫困。\n這場計謀，是對人性的深刻洞察。',
+  },
+
+  's3_see_through': {
+    image: IMG.simayi,
+    lines: [
+      { speaker: '旁白', text: '先鋒回報：城內果真兵力極少，是空城。' },
+      { speaker: '司馬懿', text: '……（沉默良久）' },
+      { speaker: '司馬昭', text: '父親？我們可以攻了！' },
+      { speaker: '司馬懿', text: '（緩緩搖頭）……撤退。' },
+      { speaker: '司馬昭', text: '父親！為何——！？' },
+    ],
+    choices: [
+      { text: '「昭兒，你還年輕，有些事你不懂。」', next: 's_end_yangkou' },
+    ]
+  },
+
+  's_end_capture': {
+    image: IMG.victory,
+    lines: [
+      { speaker: '旁白', text: '大軍攻入西城，活捉諸葛亮。蜀漢北伐就此瓦解。' },
+      { speaker: '司馬懿', text: '諸葛亮，你低估了我。' },
+      { speaker: '諸葛亮', text: '……我確實賭輸了。但，司馬都督，你贏了這一局，卻未必贏得了……那之後的事。' },
+    ],
+    ending: 'success',
+    endingTitle: '識破空城計，活捉諸葛亮！',
+    lesson: '這是歷史上沒有發生的結局。\n真實的司馬懿，識破了空城計，卻故意撤退——因為諸葛亮一死，他司馬懿就失去了存在的價值。\n\n「養寇自重」，有時比勝利更重要。',
+  },
+
+  's_end_yangkou': {
+    image: IMG.simayi,
+    lines: [
+      { speaker: '旁白', text: '你下令全軍撤退。你心中清楚——諸葛亮是空城計沒錯。' },
+      { speaker: '司馬懿', text: '（心中獨白）諸葛亮若死，我司馬懿還有何用？曹氏皇族需要我，是因為有諸葛亮在。留著這個敵人，才能保住我的位置。' },
+      { speaker: '旁白', text: '這一退，不是被騙，而是一盤更大的棋。' },
+    ],
+    ending: 'special',
+    endingTitle: '養寇自重——更深的計謀',
+    lesson: '歷史學者認為，司馬懿可能看穿了空城計，卻選擇撤退。\n\n因為曹魏皇族需要他，正是因為「有諸葛亮這個威脅存在」。消滅諸葛亮，等於消滅了自己的價值。\n\n這才是司馬懿真正可怕的地方。',
+  },
+};
+
+// ── 全域狀態 ──
+let state = {
+  screen: 'title',   // title | select | scene | ending
+  nodeId: null,
+  lineIndex: 0,
+  character: null,   // 'zhuge' | 'simayi'
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ── 渲染主函式 ──
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  if (state.screen === 'title')   renderTitle(app);
+  else if (state.screen === 'select') renderSelect(app);
+  else if (state.screen === 'scene')  renderScene(app);
+  else if (state.screen === 'ending') renderEnding(app);
+}
+
+// ── 標題畫面 ──
+function renderTitle(app) {
+  const div = document.createElement('div');
+  div.className = 'title-screen fade-in';
+  div.innerHTML = `
+    <img src="${IMG.title}" class="title-bg" alt="背景">
+    <div class="title-overlay">
+      <div class="title-main">空城計</div>
+      <div class="title-sub">三國策略 RPG</div>
+      <button class="start-btn" onclick="setState({screen:'select'})">開始遊戲</button>
+    </div>
+  `;
+  app.appendChild(div);
+}
+
+// ── 選角畫面 ──
+function renderSelect(app) {
+  const div = document.createElement('div');
+  div.className = 'fade-in';
+  div.style = 'padding: 32px 16px;';
+  div.innerHTML = `
+    <div style="text-align:center; margin-bottom: 28px;">
+      <div style="font-size:13px; color:#8b6a4a; letter-spacing:4px; margin-bottom:8px;">SELECT YOUR ROLE</div>
+      <div style="font-size:26px; font-weight:900; letter-spacing:4px;">選擇你的角色</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="char-card" onclick="startGame('zhuge')">
+        <img src="${IMG.zhuge}" alt="諸葛亮">
+        <div class="char-info">
+          <div style="font-size:19px; font-weight:900; color:#f0c040; margin-bottom:4px;">諸葛亮</div>
+          <div style="font-size:12px; color:#8b6a4a; margin-bottom:10px;">蜀漢 丞相</div>
+          <div style="font-size:13px; color:#b8a898; line-height:1.7;">
+            手握空城，以智退敵。<br>你能讓十五萬大軍不戰而退嗎？
+          </div>
+        </div>
+      </div>
+      <div class="char-card" onclick="startGame('simayi')">
+        <img src="${IMG.simayi}" alt="司馬懿" style="object-position:center;">
+        <div class="char-info">
+          <div style="font-size:19px; font-weight:900; color:#70b8ff; margin-bottom:4px;">司馬懿</div>
+          <div style="font-size:12px; color:#8b6a4a; margin-bottom:10px;">曹魏 大都督</div>
+          <div style="font-size:13px; color:#b8a898; line-height:1.7;">
+            十五萬大軍壓境。<br>你能看穿諸葛亮的計謀嗎？
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  app.appendChild(div);
+}
+
+function startGame(character) {
+  const firstNode = character === 'zhuge' ? 'z1' : 's1';
+  setState({ screen: 'scene', nodeId: firstNode, lineIndex: 0, character });
+}
+
+// ── 場景畫面 ──
+function renderScene(app) {
+  const node = STORY[state.nodeId];
+  if (!node) return;
+
+  // 結局節點
+  if (node.ending) {
+    setState({ screen: 'ending', endingNode: node });
+    return;
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'fade-in';
+
+  // 場景圖
+  const img = document.createElement('img');
+  img.src = node.image || '';
+  img.className = 'scene-img';
+  img.alt = '場景圖';
+  wrapper.appendChild(img);
+
+  const inner = document.createElement('div');
+  inner.style = 'padding: 16px;';
+
+  const currentLine = node.lines[state.lineIndex];
+  const isLastLine = state.lineIndex >= node.lines.length - 1;
+
+  // 對話框
+  const dialogBox = document.createElement('div');
+  dialogBox.className = 'dialog-box';
+
+  if (currentLine.speaker === '旁白') {
+    dialogBox.innerHTML = `<div class="narration-text">── ${currentLine.text.replace(/\n/g, '<br>')} ──</div>`;
+  } else {
+    dialogBox.innerHTML = `
+      <div class="speaker-tag">【${currentLine.speaker}】</div>
+      <div class="dialog-text">${currentLine.text.replace(/\n/g, '<br>')}</div>
+    `;
+  }
+
+  inner.appendChild(dialogBox);
+
+  // 選項 or 繼續
+  const actionArea = document.createElement('div');
+  actionArea.style = 'margin-top: 16px;';
+
+  if (isLastLine && node.choices) {
+    node.choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.style = 'margin-bottom: 10px;';
+      btn.textContent = choice.text;
+      btn.onclick = () => {
+        setState({ nodeId: choice.next, lineIndex: 0 });
+      };
+      actionArea.appendChild(btn);
+    });
+  } else {
+    // 繼續按鈕
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'choice-btn';
+    nextBtn.textContent = isLastLine && node.next
+      ? '繼續 ▶'
+      : '下一頁 ▶';
+    nextBtn.style = 'text-align: center; color: #c8963e;';
+    nextBtn.onclick = () => {
+      if (isLastLine && node.next) {
+        setState({ nodeId: node.next, lineIndex: 0 });
+      } else {
+        setState({ lineIndex: state.lineIndex + 1 });
+      }
+    };
+    actionArea.appendChild(nextBtn);
+
+    // 進度點
+    if (node.lines.length > 1) {
+      const dots = document.createElement('div');
+      dots.style = 'text-align:center; margin-top:10px;';
+      dots.innerHTML = node.lines.map((_, i) =>
+        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${i === state.lineIndex ? '#c8963e' : '#3a2a1a'};margin:0 3px;"></span>`
+      ).join('');
+      actionArea.appendChild(dots);
+    }
+  }
+
+  inner.appendChild(actionArea);
+
+  // 底部角色標記
+  const footer = document.createElement('div');
+  footer.style = 'margin-top: 20px; text-align:center;';
+  footer.innerHTML = `
+    <span style="font-size:12px; color:#3a2a1a; letter-spacing:3px;">
+      ${state.character === 'zhuge' ? '▸ 諸葛亮 路線' : '▸ 司馬懿 路線'}
+    </span>
+  `;
+  inner.appendChild(footer);
+
+  wrapper.appendChild(inner);
+  app.appendChild(wrapper);
+}
+
+// ── 結局畫面 ──
+function renderEnding(app) {
+  const node = state.endingNode;
+  const endingConfig = {
+    success: { cls: 'tag-success', icon: '★', imgKey: 'victory' },
+    partial: { cls: 'tag-partial', icon: '◈', imgKey: 'zhuge' },
+    fail:    { cls: 'tag-fail',    icon: '✕', imgKey: 'defeat' },
+    special: { cls: 'tag-success', icon: '♟', imgKey: 'simayi' },
+  };
+  const cfg = endingConfig[node.ending] || endingConfig.fail;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'fade-in';
+
+  // 結局圖
+  const img = document.createElement('img');
+  img.src = IMG[cfg.imgKey];
+  img.className = 'scene-img';
+  img.alt = '結局';
+  wrapper.appendChild(img);
+
+  // 先顯示最後幾行對話
+  const inner = document.createElement('div');
+  inner.style = 'padding: 16px;';
+
+  // 最後的台詞
+  node.lines.forEach(line => {
+    const lineEl = document.createElement('div');
+    lineEl.style = 'margin-bottom: 12px;';
+    if (line.speaker === '旁白') {
+      lineEl.innerHTML = `<div class="narration-text" style="font-size:13px;">── ${line.text.replace(/\n/g, '<br>')} ──</div>`;
+    } else {
+      lineEl.innerHTML = `
+        <span style="color:#c8963e; font-size:12px; font-weight:700; margin-right:8px;">【${line.speaker}】</span>
+        <span style="font-size:14px;">${line.text.replace(/\n/g, '<br>')}</span>
+      `;
+    }
+    inner.appendChild(lineEl);
+  });
+
+  // 結局標題
+  const endBox = document.createElement('div');
+  endBox.className = 'ending-box';
+  endBox.innerHTML = `
+    <div style="font-size:13px; color:#5c4033; letter-spacing:4px; margin-bottom:8px;">ENDING</div>
+    <div class="ending-title ${cfg.cls}">${cfg.icon} ${node.endingTitle}</div>
+    <div class="lesson-box">
+      <div style="font-size:12px; color:#c8963e; margin-bottom:6px; letter-spacing:2px;">📖 歷史補充</div>
+      ${node.lesson.replace(/\n/g, '<br>')}
+    </div>
+    <div style="margin-top:24px;">
+      <button class="replay-btn" onclick="setState({screen:'select',nodeId:null,lineIndex:0})">換角色重玩</button>
+      <button class="replay-btn" onclick="replayCurrentChar()">同角色再來一次</button>
+    </div>
+  `;
+  inner.appendChild(endBox);
+  wrapper.appendChild(inner);
+  app.appendChild(wrapper);
+}
+
+function replayCurrentChar() {
+  const firstNode = state.character === 'zhuge' ? 'z1' : 's1';
+  setState({ screen: 'scene', nodeId: firstNode, lineIndex: 0 });
+}
+
+// 啟動
+render();
+</script>
+</body>
+</html>

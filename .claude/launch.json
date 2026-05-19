@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "空城計RPG",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "3456"],
+      "port": 3456
+    }
+  ]
+}

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>空城計 RPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: #0a0500; }
+/* 桌機/平板：在遊戲視窗外顯示裝飾底色 */
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 50% 40%, #1a0a00 0%, #000 80%); z-index:-1; }
+body { font-family: 'Noto Serif TC', serif; color: #f0e6d3; user-select: none; }
+/* 響應式容器：最寬 640px，在大螢幕置中 */
+#app {
+  width: 100%;
+  max-width: clamp(320px, 100vw, 640px);
+  height: 100dvh;
+  height: 100vh;   /* fallback */
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(200,100,0,.15);
+}
+
+/* ─── TITLE ─── */
+.title-wrap { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.title-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+.title-content { position: relative; z-index: 2; text-align: center; }
+.title-main { font-size: 56px; font-weight: 900; color: #fff; letter-spacing: 12px; text-shadow: 0 0 30px #8b1a1a, 2px 2px 0 #3e0000; }
+.title-sub { font-size: 13px; color: #c8963e; letter-spacing: 5px; margin: 8px 0 40px; }
+.btn-start { background: #8b1a1a; color: #fff; border: 2px solid #c8963e; padding: 12px 40px; font-size: 16px; font-family: inherit; letter-spacing: 4px; cursor: pointer; border-radius: 2px; transition: all .2s; }
+.btn-start:hover { background: #a52020; box-shadow: 0 0 20px rgba(200,150,62,.5); transform: scale(1.04); }
+
+/* ─── STORY ─── */
+.story-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.story-img-wrap { position: relative; width: 100%; background: #000; flex-shrink: 0; }
+.story-img { width: 100%; max-height: clamp(170px, 40vh, 300px); object-fit: contain; display: block; }
+.story-img-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; background: linear-gradient(transparent, rgba(4,2,0,1)); pointer-events: none; }
+.story-box { flex: 1; background: rgba(4,2,0,1); border-top: 2px solid #8b1a1a; padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.story-speaker { font-size: 12px; color: #c8963e; letter-spacing: 3px; font-weight: 700; font-family: 'Noto Sans TC', sans-serif; }
+.story-text { font-size: clamp(14px, 4vw, 16px); line-height: 1.9; }
+.story-narr { font-size: clamp(13px, 3.5vw, 15px); line-height: 1.9; color: #b8a898; font-style: italic; }
+.story-next { margin-top: auto; padding-top: 10px; text-align: right; }
+.btn-next { background: transparent; border: 1px solid #5c3a1e; color: #c8963e; padding: 8px 20px; font-family: inherit; font-size: 13px; cursor: pointer; letter-spacing: 2px; transition: all .15s; }
+.btn-next:hover { border-color: #c8963e; background: rgba(200,150,62,.1); }
+
+/* ─── BATTLE (FC 風格) ─── */
+.battle-wrap { flex:1; display:flex; flex-direction:column; min-height:0; background:#000; }
+.fc-header { background:#000; border-bottom:2px solid #fff; padding:3px 10px; display:flex; justify-content:space-between; font-size:12px; color:#fff; font-family:'Noto Sans TC',sans-serif; letter-spacing:2px; flex-shrink:0; }
+.fc-header .fc-stage { color:#e8a020; font-weight:700; }
+
+/* 角色列表區 */
+.fc-rows { flex:1; display:flex; flex-direction:column; justify-content:space-around; padding:4px 0; overflow:hidden; }
+/* 4欄：[左側人物圖] [玩家資訊 1fr] [敵方資訊 1fr] [右側人物圖] — 響應式 clamp */
+.fc-row { display:grid; grid-template-columns:clamp(44px,10vw,72px) 1fr 1fr clamp(44px,10vw,72px); align-items:stretch; min-height:0; border-bottom:1px solid #1a1a1a; }
+.fc-row:last-child { border-bottom:none; }
+.fc-row.is-active-row { background:rgba(232,160,32,.08); outline:1px solid #e8a020; outline-offset:-1px; }
+
+/* 外側人物大圖欄 */
+.fc-portrait-col   { display:flex; align-items:center; justify-content:center; padding:2px; border-right:1px solid #1a1a1a; }
+.fc-portrait-col-r { display:flex; align-items:center; justify-content:center; padding:2px; border-left:1px solid #1a1a1a; }
+.fc-sprite    { width:clamp(44px,10vw,72px); height:clamp(55px,13vw,90px); object-fit:contain; object-position:center bottom; display:block; background:transparent; }
+.fc-sprite.flip { transform:scaleX(-1); }
+.fc-sprite-ph { width:clamp(44px,10vw,72px); height:clamp(55px,13vw,90px); background:#111; display:flex; align-items:center; justify-content:center; font-size:clamp(16px,4vw,24px); }
+
+/* 玩家側（左中）/ 敵方側（右中）資訊欄 */
+.fc-pinfo { display:flex; flex-direction:column; gap:2px; align-items:flex-start; padding:clamp(3px,1vw,6px) clamp(4px,1.2vw,8px); justify-content:center; }
+.fc-einfo { display:flex; flex-direction:column; gap:2px; align-items:flex-end;   padding:clamp(3px,1vw,6px) clamp(4px,1.2vw,8px); justify-content:center; }
+
+/* 資訊欄內的小頭像（血條上方）*/
+.fc-face    { width:clamp(26px,7vw,40px); height:clamp(32px,9vw,50px); object-fit:contain; object-position:center top; border:1px solid #555; display:block; margin-bottom:2px; background:transparent; }
+.fc-face-ph { width:clamp(22px,6vw,36px); height:clamp(22px,6vw,36px); background:#1a1a1a; border:1px solid #333; display:flex; align-items:center; justify-content:center; font-size:clamp(11px,3vw,16px); margin-bottom:2px; }
+.fc-einfo .fc-face, .fc-einfo .fc-face-ph { margin-left:auto; }
+
+.fc-name  { font-size:clamp(10px,3vw,14px); color:#fff; font-weight:700; font-family:'Noto Sans TC',sans-serif; line-height:1.2; white-space:nowrap; }
+.fc-name.dead { color:#444; }
+.fc-hpnum { font-size:clamp(9px,2.5vw,12px); color:#888; font-family:'Courier New',monospace; line-height:1; }
+.fc-hpnum.dead { color:#333; }
+.fc-bar-wrap { width:100%; height:clamp(6px,1.5vw,10px); background:#111; border:1px solid #333; border-radius:1px; }
+.fc-bar-p { height:100%; background:linear-gradient(90deg,#e8a020,#ffcc44); transition:width .45s ease; border-radius:1px; }  /* 橘黃 = 玩家 */
+.fc-bar-e { height:100%; background:linear-gradient(90deg,#4422aa,#8866ee); transition:width .45s ease; border-radius:1px; }  /* 紫 = 敵方 */
+.fc-bar-dead { background:#222 !important; }
+
+/* 下方文字框 + 頭像 */
+.fc-bottom { display:flex; gap:6px; padding:6px; background:#000; border-top:2px solid #fff; flex-shrink:0; height:clamp(72px,16vw,100px); }
+.fc-textbox { flex:1; background:#000; border:2px solid #fff; padding:5px 8px; color:#fff; font-size:clamp(11px,3vw,14px); font-family:'Noto Sans TC',sans-serif; line-height:1.65; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+.fc-textbox-line { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fc-textbox-line.log-atk    { color:#ffcc44; }
+.fc-textbox-line.log-tactic { color:#88aaff; }
+.fc-textbox-line.log-intrude{ color:#44ff88; font-weight:700; }
+.fc-textbox-line.log-system { color:#666; }
+.fc-textbox-line.log-event  { color:#ffdd77; font-style:italic; }
+.fc-portrait { width:70px; flex-shrink:0; border:2px solid #fff; background:#0a0a0a; display:flex; align-items:center; justify-content:center; }
+.fc-portrait img { width:100%; height:100%; object-fit:contain; object-position:center; image-rendering:pixelated; image-rendering:crisp-edges; }
+
+/* 指令選單（覆蓋在底部） */
+.fc-cmd { position:absolute; bottom:0; left:0; right:0; background:#000; border-top:2px solid #fff; padding:7px 8px; z-index:100; }
+.fc-cmd-who { font-size:clamp(10px,2.5vw,13px); color:#e8a020; font-family:'Noto Sans TC',sans-serif; text-align:center; margin-bottom:5px; letter-spacing:1px; }
+.fc-cmd-who em { color:#fff; font-style:normal; font-weight:700; }
+/* 主指令：2×2 格線（攻擊、計略、防守、撤退）*/
+.fc-cmd-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.fc-btn { background:#000; border:2px solid #fff; color:#fff; padding:clamp(6px,1.5vw,10px) 4px; font-family:'Noto Sans TC',sans-serif; font-size:clamp(12px,3vw,15px); cursor:pointer; text-align:center; transition:all .1s; letter-spacing:1px; }
+.fc-btn:hover:not(:disabled) { background:#fff; color:#000; }
+.fc-btn:disabled { border-color:#444; color:#444; cursor:default; }
+/* 防守按鈕：藍綠色 */
+.fc-btn.defend-btn { border-color:#22aabb; color:#44ccdd; }
+.fc-btn.defend-btn:hover:not(:disabled) { background:#22aabb; color:#000; }
+/* 計略列表 */
+/* 隨機事件橫幅 */
+.fc-event-bar { padding:4px 10px; font-size:clamp(10px,2.8vw,12px); text-align:center; letter-spacing:1px; border-bottom:1px solid #1a1a1a; transition:background .3s; }
+.ev-good    { background:rgba(20,100,40,.45);  color:#66ee88; }
+.ev-bad     { background:rgba(120,20,20,.45);  color:#ff7777; }
+.ev-neutral { background:rgba(80,70,20,.45);   color:#ffcc55; }
+
+.fc-tactic-list { display:flex; flex-direction:column; gap:4px; }
+.fc-tactic-btn { background:#000; border:2px solid #6644cc; color:#aabbff; padding:6px 10px; font-family:'Noto Sans TC',sans-serif; font-size:clamp(11px,2.8vw,13px); cursor:pointer; display:flex; flex-direction:column; gap:2px; transition:all .1s; }
+.fc-tactic-btn:hover:not(:disabled) { background:#6644cc; color:#fff; }
+.fc-tactic-btn:disabled { opacity:.3; cursor:default; }
+/* 計略按鈕頂部行（名稱 + 費用）*/
+.fc-tactic-row1 { display:flex; justify-content:space-between; align-items:center; }
+.fc-tactic-cost { color:#8866cc; font-family:'Courier New',monospace; font-size:clamp(10px,2.5vw,12px); }
+/* 技能效果說明 */
+.fc-tactic-desc { font-size:clamp(10px,2.5vw,12px); color:#99aacc; line-height:1.4; text-align:left; margin-top:2px; }
+.fc-tactic-btn:hover:not(:disabled) .fc-tactic-desc { color:#ddeeff; }
+.fc-tactic-btn:hover:not(:disabled) .fc-tactic-cost { color:#cc99ff; }
+.fc-target-list { display:flex; flex-direction:column; gap:4px; }
+.fc-target-btn { background:#000; border:2px solid #cc4422; color:#ffaa88; padding:8px 10px; font-family:'Noto Sans TC',sans-serif; font-size:13px; cursor:pointer; display:flex; justify-content:space-between; transition:all .1s; }
+.fc-target-btn:hover { background:#cc4422; color:#fff; }
+.fc-back { margin-top:5px; }
+.fc-back-btn { background:transparent; border:1px solid #666; color:#888; padding:5px 14px; font-family:'Noto Sans TC',sans-serif; font-size:12px; cursor:pointer; }
+.fc-back-btn:hover { color:#fff; border-color:#fff; }
+.fc-wait-msg { text-align:center; padding:14px 0; font-size:12px; color:#444; letter-spacing:4px; font-family:'Noto Sans TC',sans-serif; }
+
+/* 亂入覆蓋 */
+.intrude-overlay { position:absolute; inset:0; background:rgba(0,0,0,.92); z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+.intrude-portrait { width:clamp(140px,35vw,220px); height:clamp(175px,44vw,275px); object-fit:cover; object-position:top center; border:3px solid #e8a020; border-radius:2px; box-shadow:0 0 24px rgba(232,160,32,.5); }
+.intrude-title { font-size:26px; font-weight:900; letter-spacing:6px; }
+.intrude-ally { color:#44ff88; text-shadow:0 0 20px #44ff88; }
+.intrude-foe  { color:#ff4444; text-shadow:0 0 20px #ff4444; }
+.intrude-sub  { font-size:13px; color:#e8a020; letter-spacing:3px; font-family:'Noto Sans TC',sans-serif; }
+
+/* 結局 */
+.ending-wrap  { flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+.ending-bg    { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; filter:brightness(.38); z-index:0; }
+.ending-body  { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:clamp(16px,4vh,28px) 18px; gap:clamp(10px,2.5vh,16px);
+                background:linear-gradient(to bottom, transparent 0%, rgba(4,2,0,.55) 35%, rgba(4,2,0,.9) 65%); }
+.ending-tag   { font-size:10px; color:#7a6a5a; letter-spacing:5px; font-family:'Noto Sans TC',sans-serif; }
+.ending-title { font-size:clamp(20px,5.5vw,28px); font-weight:900; letter-spacing:4px; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,.8); }
+.ending-lesson{ background:rgba(0,0,0,.55); border-left:3px solid #c8963e; padding:10px 14px; font-size:clamp(12px,3.2vw,14px); line-height:1.8; color:#c8a878; width:100%; }
+.btn-replay { background:transparent; border:1.5px solid #c8963e; color:#c8963e; padding:9px 26px; font-family:inherit; font-size:13px; cursor:pointer; letter-spacing:2px; transition:all .2s; border-radius:2px; }
+.btn-replay:hover { background:rgba(200,150,62,.15); }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation: fadeIn .3s ease forwards; }
+
+@keyframes atkLeft  { 0%,100%{transform:translateX(0)} 45%{transform:translateX(-32px) scale(1.05)} }
+@keyframes atkRight { 0%,100%{transform:translateX(0)} 45%{transform:translateX( 32px) scale(1.05)} }
+.anim-atk-l { animation: atkLeft  .36s ease; }
+.anim-atk-r { animation: atkRight .36s ease; }
+
+@keyframes hitShake { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-7px)} 70%{transform:translateX(7px)} }
+.anim-hit { animation: hitShake .22s ease; }
+
+@keyframes floatDmg { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-44px) scale(.8)} }
+
+@keyframes intrudeAppear { from{opacity:0;transform:scale(.4) rotate(-8deg)} to{opacity:1;transform:scale(1) rotate(0)} }
+.intrude-anim { animation: intrudeAppear .45s cubic-bezier(.175,.885,.32,1.275) forwards; }
+
+@keyframes flashRed { 0%{background:rgba(200,30,30,.45)} 100%{background:transparent} }
+.flash-overlay { animation: flashRed .35s ease forwards; position:absolute;inset:0;pointer-events:none;z-index:50; border-radius:3px; }
+
+/* ─── TACTIC FX ─── */
+@keyframes fxFireFall   { 0%{opacity:1;transform:translateY(-30px) scale(1.6) rotate(-8deg)} 100%{opacity:0;transform:translateY(110px) scale(.5) rotate(25deg)} }
+@keyframes fxMusicFloat { 0%{opacity:1;transform:translateY(0) rotate(-5deg) scale(1)} 100%{opacity:0;transform:translateY(-100px) rotate(35deg) scale(.6)} }
+@keyframes fxPhantomPop { 0%{opacity:0;transform:scaleX(2.5) scaleY(.2)} 25%{opacity:.9;transform:scale(1)} 70%{opacity:.7;transform:scale(1.1) translateY(-8px)} 100%{opacity:0;transform:scale(1.4) translateY(-24px)} }
+@keyframes fxBaguaSpin  { 0%{opacity:1;transform:scale(.2) rotate(0deg)} 55%{opacity:1;transform:scale(1.6) rotate(600deg)} 100%{opacity:0;transform:scale(2) rotate(720deg)} }
+@keyframes fxArrowFly   { 0%{opacity:1;transform:translateX(0) scaleX(1)} 75%{opacity:1;transform:translateX(165px) scaleX(1)} 100%{opacity:0;transform:translateX(190px) scaleX(.8)} }
+@keyframes fxSlash      { 0%{opacity:1;transform:scale(.4) rotate(-30deg)} 40%{opacity:1;transform:scale(1.3) rotate(8deg)} 100%{opacity:0;transform:scale(1.6) rotate(15deg)} }
+@keyframes fxFlash      { 0%{opacity:.85} 100%{opacity:0} }
+.fx-layer { position:absolute;inset:0;pointer-events:none;z-index:120;overflow:hidden; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ════════════════════════
+//  IMAGES
+// ════════════════════════
+const IMG = {
+  title:    'kongchengji_title_20260429_093759.png',
+  empty:    'kongchengji_empty_20260429_093835.png',
+  victory:  'kongchengji_victory_20260429_093840.png',
+  defeat:   'kongchengji_defeat_20260429_093837.png',
+  jieting:  'bg_jieting_20260429_095427.png',
+  // 故事插圖（場景專屬）
+  story_beifa:      'story_beifa.png',       // 北伐大軍行軍
+  story_jieting:    'story_jieting.png',     // 街亭失守
+  story_spy:        'story_spy.png',         // 探子急報
+  story_zhuge_calm: 'story_zhuge_calm.png',  // 諸葛亮備香備琴
+  story_kongcheng:  'story_kongcheng.png',   // 空城計撫琴
+  // 高解析度角色圖（備用）
+  zhuge_story:  'kongchengji_zhugeliang_20260429_093800.png',
+  simayi_story: 'kongchengji_simayi_20260429_093745.png',
+  // 武將亂入大圖（400x600，去背）
+  intrude_zhaoYun:  'intrude_zhaoYun.png',
+  intrude_jiangWei: 'intrude_jiangWei.png',
+  intrude_maDai:    'intrude_maDai.png',
+  intrude_zhangHe:  'intrude_zhangHe.png',
+  intrude_dengAi:   'intrude_dengAi.png',
+  // 角色精靈（去背高清，200x250，用於戰鬥面板）
+  zhuge:    'spr_zhuge.png',
+  simayi:   'spr_simayi.png',
+  zhaoYun:  'spr_zhaoYun.png',
+  jiangWei: 'spr_jiangWei.png',
+  maDai:    'spr_maDai.png',
+  zhangHe:  'spr_zhangHe.png',
+  dengAi:   'spr_dengAi.png',
+  tongziA:  'spr_tongziA.png',
+  tongziB:  'spr_tongziB.png',
+  simashi:  'spr_simashi.png',
+  simazhao: 'spr_simazhao.png',
+};
+
+// ════════════════════════
+//  CHARACTER DATA
+// ════════════════════════
+const CHAR_BASE = {
+  zhuge:    { name:'諸葛亮', maxHp:270, atk:42, def:28, maxMp:60, img:IMG.zhuge,    tactics:['kongchengji','yibing','bagua'] },
+  tongziA:  { name:'書童甲', maxHp:170, atk:55, def:20, maxMp:0,  img:IMG.tongziA,  tactics:[] },
+  tongziB:  { name:'書童乙', maxHp:150, atk:50, def:18, maxMp:0,  img:IMG.tongziB,  tactics:[] },
+  zhaoYun:  { name:'趙雲',   maxHp:350, atk:88, def:50, maxMp:0,  img:IMG.zhaoYun,  charImg:IMG.intrude_zhaoYun,  tactics:[] },
+  jiangWei: { name:'姜維',   maxHp:290, atk:72, def:38, maxMp:30, img:IMG.jiangWei, charImg:IMG.intrude_jiangWei, tactics:['huogong'] },
+  maDai:    { name:'馬岱',   maxHp:240, atk:68, def:33, maxMp:0,  img:IMG.maDai,    charImg:IMG.intrude_maDai,    tactics:[] },
+  simayi:   { name:'司馬懿', maxHp:380, atk:60, def:35, maxMp:30, img:IMG.simayi,   charImg:IMG.simayi_story,     tactics:['qiangong'] },
+  simashi:  { name:'司馬師', maxHp:280, atk:58, def:36, maxMp:0,  img:IMG.simashi,  tactics:[] },
+  simazhao: { name:'司馬昭', maxHp:260, atk:62, def:32, maxMp:0,  img:IMG.simazhao, tactics:[] },
+  zhangHe:  { name:'張郃',   maxHp:310, atk:82, def:42, maxMp:0,  img:IMG.zhangHe,  charImg:IMG.intrude_zhangHe,  tactics:[] },
+  dengAi:   { name:'鄧艾',   maxHp:270, atk:62, def:38, maxMp:0,  img:IMG.dengAi,   charImg:IMG.intrude_dengAi,   tactics:['yuancheng'] },
+};
+
+const TACTICS_DEF = {
+  kongchengji: { name:'空城計',   cost:20, desc:'50% 機率敵方本回不攻擊' },
+  yibing:      { name:'疑兵之計', cost:15, desc:'敵攻擊 -40%，持續 2 回' },
+  bagua:       { name:'八卦陣',   cost:10, desc:'我方防禦 +60%，持續 1 回' },
+  huogong:     { name:'火攻',     cost:25, desc:'對全體敵人造成大傷害' },
+  qiangong:    { name:'強攻',     cost:20, desc:'1.5 倍傷害攻擊一名目標' },
+  yuancheng:   { name:'遠程射擊', cost:0,  desc:'無視防禦攻擊一名目標' },
+};
+
+// ════════════════════════
+//  RANDOM EVENTS
+// ════════════════════════
+// pAtk: 我方攻擊倍率  pDmg: 我方受傷倍率  eAtk: 敵方攻擊倍率  eDmg: 敵方受傷倍率
+// type: good(利我) / bad(不利) / neutral(雙向)
+const EVENT_DEFS = [
+  { id:'wind',  name:'風沙大起',   icon:'🌪', desc:'雙方攻擊 -20%',            type:'neutral', dur:2, pAtk:0.80, pDmg:1.00, eAtk:0.80, eDmg:1.00 },
+  { id:'rain',  name:'驟雨傾盆',   icon:'🌧', desc:'雙方攻擊 -15%',            type:'neutral', dur:2, pAtk:0.85, pDmg:1.00, eAtk:0.85, eDmg:1.00 },
+  { id:'fog',   name:'濃霧瀰漫',   icon:'🌫', desc:'雙方攻擊大幅 -30%',        type:'neutral', dur:1, pAtk:0.70, pDmg:1.00, eAtk:0.70, eDmg:1.00 },
+  { id:'dawn',  name:'旭日東升',   icon:'☀️', desc:'雙方攻擊 +15%',           type:'neutral', dur:1, pAtk:1.15, pDmg:1.00, eAtk:1.15, eDmg:1.00 },
+  { id:'terr',  name:'地利我方',   icon:'⛰️', desc:'我方攻擊 +25%',           type:'good',    dur:2, pAtk:1.25, pDmg:1.00, eAtk:1.00, eDmg:1.00 },
+  { id:'moral', name:'士氣大振',   icon:'🔥', desc:'我方攻擊 +30%',            type:'good',    dur:1, pAtk:1.30, pDmg:1.00, eAtk:1.00, eDmg:1.00 },
+  { id:'wall',  name:'城牆掩護',   icon:'🏯', desc:'我方受傷 -30%',            type:'good',    dur:2, pAtk:1.00, pDmg:0.70, eAtk:1.00, eDmg:1.00 },
+  { id:'wlow',  name:'敵方士氣低', icon:'💀', desc:'敵方攻擊 -25%',            type:'good',    dur:2, pAtk:1.00, pDmg:1.00, eAtk:0.75, eDmg:1.00 },
+  { id:'spy',   name:'細作內應',   icon:'🗡️', desc:'我方攻擊 +20%，敵受傷 +15%', type:'good', dur:1, pAtk:1.20, pDmg:1.00, eAtk:1.00, eDmg:1.15 },
+  { id:'arrow', name:'暗箭難防',   icon:'🏹', desc:'我方受傷 +25%',            type:'bad',     dur:1, pAtk:1.00, pDmg:1.25, eAtk:1.00, eDmg:1.00 },
+  { id:'weim',  name:'魏軍氣盛',   icon:'⚔️', desc:'敵方攻擊 +25%',           type:'bad',     dur:1, pAtk:1.00, pDmg:1.00, eAtk:1.25, eDmg:1.00 },
+  { id:'weiw',  name:'魏軍堅盾',   icon:'🔰', desc:'敵方受傷 -25%',           type:'bad',     dur:2, pAtk:1.00, pDmg:1.00, eAtk:1.00, eDmg:0.75 },
+];
+
+function getEvMods() {
+  if (!G.activeEvent) return { pAtk:1, pDmg:1, eAtk:1, eDmg:1 };
+  return G.activeEvent.def;
+}
+
+function rollEvent() {
+  const ev = EVENT_DEFS[Math.floor(Math.random() * EVENT_DEFS.length)];
+  G.activeEvent = { def: ev, turns: ev.dur };
+  const typeLabel = ev.type==='good' ? '✦ 有利' : ev.type==='bad' ? '✦ 不利' : '✦ 天候';
+  log(`${typeLabel}｜${ev.icon} 【${ev.name}】${ev.desc}，持續 ${ev.dur} 回合`, 'log-event');
+}
+
+// ════════════════════════
+//  STORY SCRIPTS
+// ════════════════════════
+const STORIES = {
+  intro: [
+    { img:IMG.story_beifa,      spk:'旁白',   txt:'建興六年。蜀漢丞相諸葛亮揮師北伐，志在恢復中原。然而，一場失誤改變了一切——' },
+    { img:IMG.story_jieting,    spk:'旁白',   txt:'馬謖失守街亭。司馬懿率十五萬大軍，如潮水般直逼西城。' },
+    { img:IMG.story_spy,        spk:'探子',   txt:'丞相！城內只剩兩千五百老弱！大將皆不在側，撤退已來不及！' },
+    { img:IMG.story_zhuge_calm, spk:'諸葛亮', txt:'……（輕搖羽扇，嘴角微揚）不必慌張。備香、備琴。我自有辦法。' },
+    { img:IMG.story_zhuge_calm, spk:'旁白',   txt:'這一戰，不是靠兵力——而是靠膽識。', next:'jieting' },
+  ],
+  after_jieting: [
+    { img:IMG.story_jieting,    spk:'旁白',   txt:'街亭一役，蜀軍難以抵擋魏軍主力。但諸葛亮已撤回西城，準備下一步棋。' },
+    { img:IMG.story_kongcheng,  spk:'諸葛亮', txt:'司馬懿，你終究還是來了。那就讓你見識見識——空城計。', next:'xicheng' },
+  ],
+};
+
+// ════════════════════════
+//  INTRUDE CONDITIONS
+// ════════════════════════
+const INTRUDES = {
+  xicheng: [
+    { side:'player', key:'zhaoYun',  cond:{ type:'playerHpPct', pct:0.3  }, done:false },
+    { side:'player', key:'jiangWei', cond:{ type:'tacticsUsed', num:3    }, done:false },
+    { side:'player', key:'maDai',    cond:{ type:'turn',        num:8    }, done:false },
+    { side:'enemy',  key:'zhangHe',  cond:{ type:'enemyHpPct',  pct:0.45 }, done:false },
+    { side:'enemy',  key:'dengAi',   cond:{ type:'turn',        num:10   }, done:false },
+  ],
+};
+
+// ════════════════════════
+//  GAME STATE
+// ════════════════════════
+let G = {
+  screen: 'title',
+  stageKey: null,
+  stageBg: null,
+  turn: 0,
+  phase: 'player',       // 'player' | 'enemy' | 'wait'
+  playerIdx: 0,
+  cmdMode: 'main',       // 'main' | 'tactics' | 'target'
+  pendingTacticTarget: null,
+  players: [],
+  enemies: [],
+  log: [],
+  tacticsUsed: 0,
+  intrudeDone: new Set(),
+  pendingIntrude: null,
+  buffs: { playerDef:0, enemyAtk:0, kongEffect:false },
+  activeEvent: null,
+  storyScript: null,
+  storyIdx: 0,
+  endingType: null,
+  busy: false,
+};
+
+// ════════════════════════
+//  HELPERS
+// ════════════════════════
+function makeChar(key) {
+  const b = CHAR_BASE[key];
+  return { ...b, key, hp:b.maxHp, mp:b.maxMp, alive:true };
+}
+function alive(arr) { return arr.filter(c => c.alive); }
+function clamp(v,lo,hi) { return Math.max(lo, Math.min(hi, v)); }
+function rnd(min,max) { return Math.floor(Math.random()*(max-min+1))+min; }
+function calcDmg(atk, def, ignDef=false) {
+  const base = ignDef ? atk : Math.max(1, atk - def * 0.45);
+  return Math.floor(base * (0.85 + Math.random()*0.3));
+}
+function log(txt, cls='') {
+  G.log.push({ txt, cls });
+  if (G.log.length > 40) G.log.shift();
+}
+function hpColor(pct) {
+  if (pct > 0.5) return 'linear-gradient(90deg,#22aa44,#44cc66)';
+  if (pct > 0.25) return 'linear-gradient(90deg,#cc8822,#ffaa33)';
+  return 'linear-gradient(90deg,#cc2222,#ff4444)';
+}
+
+// ════════════════════════
+//  RENDER MAIN
+// ════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.className = 'fade-in';
+  if      (G.screen==='title')  renderTitle(app);
+  else if (G.screen==='story')  renderStory(app);
+  else if (G.screen==='battle') renderBattle(app);
+  else if (G.screen==='ending') renderEnding(app);
+  // 浮動音樂按鈕
+  const muteBtn = document.createElement('button');
+  muteBtn.id = 'mute-btn';
+  muteBtn.textContent = _bgmOn ? '🔊' : '🔇';
+  muteBtn.style.cssText = 'position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.6);border:1px solid #5c3a1e;color:#c8963e;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer;line-height:1;';
+  muteBtn.onclick = toggleBGM;
+  document.getElementById('app').appendChild(muteBtn);
+}
+
+// ── Title ──────────────────────────────
+function renderTitle(app) {
+  app.innerHTML = `
+    <div class="title-wrap fade-in">
+      <img src="${IMG.title}" class="title-bg-img">
+      <div class="title-content">
+        <div class="title-main">空城計</div>
+        <div class="title-sub">三國 策略 戰鬥 RPG</div>
+        <button class="btn-start" onclick="startStory('intro')">開始遊戲</button>
+        <a href="instructions.html" style="display:block;margin-top:10px;color:#7a6040;font-size:12px;letter-spacing:2px;text-decoration:none;border:1px solid #3a2a10;padding:6px 20px;border-radius:2px;transition:color .2s,border-color .2s" onmouseover="this.style.color='#c8963e';this.style.borderColor='#c8963e'" onmouseout="this.style.color='#7a6040';this.style.borderColor='#3a2a10'">操作說明</a>
+      </div>
+    </div>`;
+}
+
+// ── Story ──────────────────────────────
+function renderStory(app) {
+  const s = G.storyScript[G.storyIdx];
+  const isLast = G.storyIdx === G.storyScript.length - 1;
+  const btnTxt = isLast ? (s.next ? '出戰 ⚔' : '確認 ▶') : '繼續 ▶';
+  app.innerHTML = `
+    <div class="story-wrap fade-in">
+      <div class="story-img-wrap">
+        <img src="${s.img}" class="story-img">
+        <div class="story-img-fade"></div>
+      </div>
+      <div class="story-box">
+        ${s.spk==='旁白'
+          ? `<div class="story-narr">── ${s.txt} ──</div>`
+          : `<div class="story-speaker">【${s.spk}】</div><div class="story-text">${s.txt}</div>`}
+        <div class="story-next">
+          <button class="btn-next" onclick="advanceStory()">${btnTxt}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function advanceStory() {
+  const s = G.storyScript[G.storyIdx];
+  if (G.storyIdx < G.storyScript.length - 1) { G.storyIdx++; render(); }
+  else if (s.next) initBattle(s.next);
+}
+
+// ── Ending ─────────────────────────────
+function renderEnding(app) {
+  const cfg = {
+    win:     { img:IMG.victory, color:'#f0c040', title:'★ 空城計，大成功！',    lesson:'諸葛亮事後說：「司馬懿知我謹慎，才會疑我。若換了旁人，早就攻城了。」\n\n空城計，是一場心理戰。賭的是對敵將個性的深刻了解。' },
+    lose:    { img:IMG.defeat,  color:'#ff6060', title:'✕ 西城陷落',           lesson:'謀略，有時比兵力更重要。諸葛亮的算計，差了那麼一步。\n\n但歷史還沒結束——蜀漢仍有一線生機。' },
+    special: { img:IMG.victory, color:'#88aaff', title:'◈ 虎口脫險',           lesson:'雖未全勝，但保住了有生力量。諸葛亮日後仍有機會捲土重來。' },
+  }[G.endingType] || {};
+  app.innerHTML = `
+    <div class="ending-wrap fade-in">
+      <img src="${cfg.img}" class="ending-bg">
+      <div class="ending-body">
+        <div class="ending-tag">ENDING</div>
+        <div class="ending-title" style="color:${cfg.color}">${cfg.title}</div>
+        <div class="ending-lesson">${(cfg.lesson||'').replace(/\n/g,'<br>')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+          <button class="btn-replay" onclick="location.reload()">回標題</button>
+          <button class="btn-replay" onclick="initBattle('xicheng')">再戰一次</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildEvBar() {
+  if (!G.activeEvent) return '<div id="fc-event-bar" style="display:none"></div>';
+  const ev = G.activeEvent.def;
+  return `<div id="fc-event-bar" class="fc-event-bar ev-${ev.type}">${ev.icon} 【${ev.name}】${ev.desc}　剩 ${G.activeEvent.turns} 回</div>`;
+}
+
+// ════════════════════════
+//  BATTLE RENDER (FC 風格)
+// ════════════════════════
+function renderBattle(app) {
+  if (G.pendingIntrude) { renderIntrude(app); return; }
+  const stageLabel = G.stageKey==='jieting' ? '街亭之戰' : '西城保衛戰';
+  const buffStr = [
+    G.buffs.playerDef>0?`八卦(${G.buffs.playerDef})`:null,
+    G.buffs.enemyAtk>0 ?`疑兵(${G.buffs.enemyAtk})`:null,
+    G.buffs.kongEffect ?'空城':null,
+  ].filter(Boolean).join(' ');
+  app.innerHTML = `
+    <div class="battle-wrap fade-in" style="position:relative;">
+      <div class="fc-header">
+        <span class="fc-stage">${stageLabel}</span>
+        <span style="color:#666;font-size:10px">${buffStr}</span>
+        <span>第${G.turn}回合</span>
+      </div>
+      ${buildEvBar()}
+      <div class="fc-rows" id="fc-rows">${buildFCRows()}</div>
+      <div class="fc-bottom">${buildFCBottom()}</div>
+      <div id="fc-cmd">${buildFCCmd()}</div>
+    </div>`;
+}
+
+function buildFCRows() {
+  const maxLen = Math.max(G.players.length, G.enemies.length);
+  let html = '';
+  for (let i = 0; i < maxLen; i++) {
+    const p = G.players[i] || null;
+    const e = G.enemies[i] || null;
+    const isActive = G.phase==='player' && p && G.players[G.playerIdx]===p;
+    html += `<div class="fc-row${isActive?' is-active-row':''}">`;
+
+    // ── 欄1：玩家大圖（最左） ──
+    if (p) {
+      const pImg = p.img
+        ? `<img src="${p.img}" class="fc-sprite" id="sprite-${p.key}">`
+        : `<div class="fc-sprite-ph" id="sprite-${p.key}">🛡</div>`;
+      html += `<div class="fc-portrait-col">${pImg}</div>`;
+    } else {
+      html += `<div class="fc-portrait-col"></div>`;
+    }
+
+    // ── 欄2：玩家資訊（小頭像 + 名字 + 血條） ──
+    if (p) {
+      const barW = Math.round(clamp(p.hp / p.maxHp, 0, 1) * 100);
+      const face  = p.img
+        ? `<img class="fc-face" src="${p.img}">`
+        : `<div class="fc-face-ph">🛡</div>`;
+      html += `<div class="fc-pinfo">
+        ${face}
+        <span class="fc-name${p.alive?'':' dead'}">${p.name}</span>
+        <span class="fc-hpnum${p.alive?'':' dead'}" id="hpn-${p.key}">${p.hp}</span>
+        <div class="fc-bar-wrap"><div class="fc-bar-p${p.alive?'':' fc-bar-dead'}" id="hpf-${p.key}" style="width:${barW}%"></div></div>
+      </div>`;
+    } else {
+      html += `<div></div>`;
+    }
+
+    // ── 欄3：敵方資訊（小頭像 + 名字 + 血條，右對齊） ──
+    if (e) {
+      const barW = Math.round(clamp(e.hp / e.maxHp, 0, 1) * 100);
+      const face  = e.img
+        ? `<img class="fc-face" src="${e.img}">`
+        : `<div class="fc-face-ph">⚔</div>`;
+      html += `<div class="fc-einfo">
+        ${face}
+        <span class="fc-name${e.alive?'':' dead'}">${e.name}</span>
+        <span class="fc-hpnum${e.alive?'':' dead'}" id="hpn-${e.key}">${e.hp}</span>
+        <div class="fc-bar-wrap"><div class="fc-bar-e${e.alive?'':' fc-bar-dead'}" id="hpf-${e.key}" style="width:${barW}%"></div></div>
+      </div>`;
+    } else {
+      html += `<div></div>`;
+    }
+
+    // ── 欄4：敵方大圖（最右，左右翻轉） ──
+    if (e) {
+      const eImg = e.img
+        ? `<img src="${e.img}" class="fc-sprite flip" id="sprite-${e.key}">`
+        : `<div class="fc-sprite-ph" id="sprite-${e.key}">⚔</div>`;
+      html += `<div class="fc-portrait-col-r">${eImg}</div>`;
+    } else {
+      html += `<div class="fc-portrait-col-r"></div>`;
+    }
+
+    html += `</div>`;
+  }
+  return html;
+}
+
+function buildFCBottom() {
+  const lines = G.log.slice(-3).map(l =>
+    `<div class="fc-textbox-line ${l.cls}">${l.txt}</div>`).join('');
+  const actor = G.phase==='player' ? (G.players[G.playerIdx]||null) : null;
+  const portrait = actor?.img
+    ? `<img src="${actor.img}" alt="">`
+    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">⚔</div>`;
+  return `<div class="fc-textbox" id="fc-textbox">${lines}</div>
+          <div class="fc-portrait" id="fc-portrait">${portrait}</div>`;
+}
+
+function buildFCCmd() {
+  if (G.phase==='enemy'||G.phase==='wait')
+    return `<div class="fc-wait-msg">─ 敵方回合 ─</div>`;
+  const actor = G.players[G.playerIdx];
+  if (!actor||!actor.alive) return '';
+  if (G.cmdMode==='tactics') {
+    const btns = actor.tactics.map(tid => {
+      const t = TACTICS_DEF[tid]; const ok = actor.mp >= t.cost;
+      return `<button class="fc-tactic-btn" ${ok?'':'disabled'} onclick="doTactic('${tid}')">
+        <div class="fc-tactic-row1">
+          <span>${t.name}</span>
+          <span class="fc-tactic-cost">策略 ${t.cost}</span>
+        </div>
+        <div class="fc-tactic-desc">${t.desc}</div>
+      </button>`;
+    }).join('');
+    return `<div class="fc-cmd">
+      <div class="fc-cmd-who">計略 ─ <em>${actor.name}</em> 策略值:${actor.mp}/${actor.maxMp}</div>
+      <div class="fc-tactic-list">${btns}</div>
+      <div class="fc-back"><button class="fc-back-btn" onclick="setCmd('main')">← 返回</button></div>
+    </div>`;
+  }
+  if (G.cmdMode==='target') {
+    const btns = alive(G.enemies).map(e =>
+      `<button class="fc-target-btn" onclick="doAttack('${e.key}')">
+        <span>${e.name}</span><span style="font-size:11px;color:#aa6644">${e.hp}/${e.maxHp}</span>
+      </button>`).join('');
+    return `<div class="fc-cmd">
+      <div class="fc-cmd-who">選擇目標</div>
+      <div class="fc-target-list">${btns}</div>
+      <div class="fc-back"><button class="fc-back-btn" onclick="setCmd('main')">← 返回</button></div>
+    </div>`;
+  }
+  const hasTactics = actor.tactics.length>0 && actor.maxMp>0;
+  const mpStr = actor.maxMp>0 ? ` 策略:${actor.mp}` : '';
+  const canDefend = actor.maxMp>0 && actor.mp < actor.maxMp;
+  return `<div class="fc-cmd">
+    <div class="fc-cmd-who"><em>${actor.name}</em>${mpStr} の番</div>
+    <div class="fc-cmd-grid">
+      <button class="fc-btn" onclick="setCmd('target')">攻 擊</button>
+      <button class="fc-btn" ${hasTactics?'':'disabled'} onclick="setCmd('tactics')">計 略</button>
+      <button class="fc-btn defend-btn" ${canDefend?'':'disabled'} onclick="doDefend()">防 守</button>
+      <button class="fc-btn" onclick="doRetreat()">撤 退</button>
+    </div>
+  </div>`;
+}
+
+// ── Intrude overlay ────────────────────
+function renderIntrude(app) {
+  const { side, charObj } = G.pendingIntrude;
+  const isAlly = side==='player';
+  const cls = isAlly ? 'intrude-ally' : 'intrude-foe';
+  const sub = isAlly ? '── 援軍到達！──' : '── 敵方增援！──';
+  const portraitSrc = charObj.charImg || charObj.img;
+  const portraitHtml = portraitSrc
+    ? `<img src="${portraitSrc}" class="intrude-portrait intrude-anim">`
+    : `<div style="font-size:60px" class="intrude-anim">⚔</div>`;
+  app.innerHTML = `
+    <div class="battle-wrap">
+      <div class="battle-field" style="flex:1;position:relative;">
+        <img src="${G.stageBg}" class="field-bg">
+        <div class="intrude-overlay">
+          ${portraitHtml}
+          <div class="intrude-title ${cls} intrude-anim">${charObj.name}</div>
+          <div class="intrude-sub">${sub}</div>
+          <button class="btn-start" style="margin-top:6px;font-size:14px;padding:10px 32px" onclick="confirmIntrude()">繼續</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════
+//  PARTIAL UPDATES
+// ════════════════════════
+function refreshPartial() {
+  // FC 風格：更新 HP 條 + 文字框 + 指令 + header buff
+  refreshHpBars();
+  const tb = document.getElementById('fc-textbox');
+  if (tb) tb.innerHTML = G.log.slice(-3).map(l =>
+    `<div class="fc-textbox-line ${l.cls}">${l.txt}</div>`).join('');
+  const cmd = document.getElementById('fc-cmd');
+  if (cmd) cmd.innerHTML = buildFCCmd();
+  // 更新頭像
+  const actor = G.phase==='player' ? (G.players[G.playerIdx]||null) : null;
+  const port = document.getElementById('fc-portrait');
+  if (port) port.innerHTML = actor?.img
+    ? `<img src="${actor.img}" alt="">`
+    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">⚔</div>`;
+  // header buff
+  const hdr = document.querySelector('.fc-header span:nth-child(2)');
+  if (hdr) {
+    const s = [
+      G.buffs.playerDef>0?`八卦(${G.buffs.playerDef})`:null,
+      G.buffs.enemyAtk>0 ?`疑兵(${G.buffs.enemyAtk})`:null,
+      G.buffs.kongEffect ?'空城':null,
+    ].filter(Boolean).join(' ');
+    hdr.textContent = s;
+  }
+  // event bar
+  const evBar = document.getElementById('fc-event-bar');
+  if (evBar) {
+    if (G.activeEvent) {
+      const ev = G.activeEvent.def;
+      evBar.style.display = '';
+      evBar.className = `fc-event-bar ev-${ev.type}`;
+      evBar.innerHTML = `${ev.icon} 【${ev.name}】${ev.desc}　剩 ${G.activeEvent.turns} 回`;
+    } else {
+      evBar.style.display = 'none';
+    }
+  }
+  // active row highlight
+  document.querySelectorAll('.fc-row').forEach((row, i) => {
+    const p = G.players[i];
+    const isActive = G.phase==='player' && p && G.players[G.playerIdx]===p;
+    row.classList.toggle('is-active-row', isActive);
+  });
+}
+
+function refreshHpBars() {
+  [...G.players,...G.enemies].forEach(c => {
+    const fill = document.getElementById(`hpf-${c.key}`);
+    const num  = document.getElementById(`hpn-${c.key}`);
+    if (!fill||!num) return;
+    const pct = clamp(c.hp/c.maxHp,0,1);
+    fill.style.width = Math.round(pct*100)+'%';
+    if (!c.alive) fill.classList.add('fc-bar-dead');
+    num.textContent = c.hp;
+    num.className = `fc-hpnum${c.alive?'':' dead'}`;
+    // 更新名字顏色
+    const nameEl = num.previousElementSibling;
+    if (nameEl) nameEl.className = `fc-name${c.alive?'':' dead'}`;
+  });
+}
+
+function scrollLog() {}  // FC 風格不需要滾動（固定3行）
+
+function setCmd(mode) { G.cmdMode = mode; refreshPartial(); }
+
+// ════════════════════════
+//  BATTLE INIT
+// ════════════════════════
+function initBattle(stageKey) {
+  G.stageKey = stageKey;
+  G.stageBg  = stageKey==='jieting' ? IMG.jieting : IMG.empty;
+  G.turn     = 1;
+  G.phase    = 'player';
+  G.playerIdx= 0;
+  G.cmdMode  = 'main';
+  G.log      = [];
+  G.tacticsUsed = 0;
+  G.intrudeDone = new Set();
+  G.pendingIntrude = null;
+  G.buffs = { playerDef:0, enemyAtk:0, kongEffect:false };
+  G.activeEvent = null;
+  G.busy  = false;
+  G.players = ['zhuge','tongziA','tongziB'].map(makeChar);
+  G.enemies = ['simashi','simayi','simazhao'].map(makeChar);
+
+  // reset intrude flags
+  if (INTRUDES[stageKey]) INTRUDES[stageKey].forEach(r => r.done=false);
+
+  log(`⚔ ${stageKey==='jieting'?'街亭之戰':'西城保衛戰'} 開始！`, 'log-system');
+  log('選擇你的行動。', 'log-system');
+  G.screen = 'battle';
+  render();
+  startBGM();
+}
+
+// ════════════════════════
+//  PLAYER ACTIONS
+// ════════════════════════
+function doAttack(enemyKey) {
+  if (G.phase!=='player' || G.busy) return;
+  const actor  = G.players[G.playerIdx];
+  const target = G.enemies.find(e => e.key===enemyKey);
+  if (!target || !target.alive) return;
+
+  G.cmdMode = 'main';
+  G.busy = true;
+
+  const ev = getEvMods();
+  const dmg = Math.round(calcDmg(actor.atk * ev.pAtk, target.def * (G.buffs.playerDef>0?0.4:1)) * ev.eDmg);
+  applyDmg(target, dmg);
+  log(`${actor.name} 攻擊 ${target.name}，造成 ${dmg} 傷害！`, 'log-atk');
+
+  animAtk('sprite-'+actor.key, 'sprite-'+target.key, 'l', () => {
+    G.busy = false;
+    checkIntrudesThen(() => {
+      if (checkEnd()) return;
+      advancePlayerIdx();
+    });
+  });
+}
+
+function doTactic(tid) {
+  if (G.phase!=='player' || G.busy) return;
+  const actor = G.players[G.playerIdx];
+  const t = TACTICS_DEF[tid];
+  if (actor.mp < t.cost) return;
+
+  actor.mp -= t.cost;
+  G.tacticsUsed++;
+  G.cmdMode = 'main';
+  G.busy = true;
+
+  // 先觸發視覺特效
+  showTacticFX(tid);
+
+  switch(tid) {
+    case 'kongchengji':
+      G.buffs.kongEffect = true;
+      log(`✦ ${actor.name} 使用【空城計】！敵方心生疑慮……`, 'log-tactic');
+      break;
+    case 'yibing':
+      G.buffs.enemyAtk = 2;
+      log(`✦ ${actor.name} 使用【疑兵之計】！敵方攻擊力大幅下降！`, 'log-tactic');
+      break;
+    case 'bagua':
+      G.buffs.playerDef = 2;
+      log(`✦ ${actor.name} 使用【八卦陣】！我方防禦大幅提升！`, 'log-tactic');
+      break;
+    case 'huogong': {
+      const ev2 = getEvMods();
+      const targets = alive(G.enemies);
+      targets.forEach(e => {
+        const dmg = Math.round(calcDmg(actor.atk * 1.5 * ev2.pAtk, e.def) * ev2.eDmg);
+        applyDmg(e, dmg);
+        log(`🔥 火攻！${e.name} 受到 ${dmg} 傷害！`, 'log-atk');
+      });
+      break;
+    }
+  }
+  refreshPartial();
+
+  setTimeout(() => {
+    G.busy = false;
+    checkIntrudesThen(() => {
+      if (checkEnd()) return;
+      advancePlayerIdx();
+    });
+  }, 900);
+}
+
+function doRetreat() {
+  if (G.stageKey==='jieting') {
+    log('撤退至西城！', 'log-system');
+    setTimeout(() => startStory('after_jieting'), 600);
+  } else {
+    log('此戰不可撤退！', 'log-system');
+    refreshPartial();
+  }
+}
+
+function doDefend() {
+  if (G.phase!=='player' || G.busy) return;
+  const actor = G.players[G.playerIdx];
+  if (actor.mp >= actor.maxMp) return;
+
+  const gain = Math.min(10, actor.maxMp - actor.mp);
+  actor.mp += gain;
+
+  log(`🛡 ${actor.name} 防守！恢復 ${gain} 策略值（${actor.mp}/${actor.maxMp}）`, 'log-system');
+
+  // 防守閃光動畫：藍綠色高亮
+  const sprEl = document.getElementById('sprite-' + actor.key);
+  if (sprEl) {
+    sprEl.style.filter = 'brightness(1.8) hue-rotate(140deg)';
+    setTimeout(() => { sprEl.style.filter = ''; }, 350);
+  }
+
+  G.cmdMode = 'main';
+  refreshPartial();
+
+  setTimeout(() => {
+    checkIntrudesThen(() => {
+      if (checkEnd()) return;
+      advancePlayerIdx();
+    });
+  }, 450);
+}
+
+// ════════════════════════
+//  TURN FLOW
+// ════════════════════════
+function advancePlayerIdx() {
+  let next = G.playerIdx + 1;
+  while (next < G.players.length && !G.players[next].alive) next++;
+
+  if (next >= G.players.length) {
+    startEnemyTurn();
+  } else {
+    G.playerIdx = next;
+    G.cmdMode = 'main';
+    refreshPartial();
+  }
+}
+
+function startEnemyTurn() {
+  G.phase = 'enemy';
+  G.cmdMode = 'main';
+  refreshPartial();
+
+  // 1. 空城計 check
+  if (G.buffs.kongEffect) {
+    G.buffs.kongEffect = false;
+    if (Math.random() < 0.50) {
+      log('【空城計】奏效！司馬懿猶豫，敵軍本回未動！', 'log-tactic');
+      setTimeout(finishEnemyTurn, 800);
+      return;
+    }
+    log('【空城計】效果有限，敵軍繼續進攻！', 'log-tactic');
+  }
+
+  // 2. 街亭 scripted loss
+  if (G.stageKey==='jieting' && G.turn >= 6) {
+    log('兵力懸殊，街亭難以守住……', 'log-system');
+    setTimeout(() => startStory('after_jieting'), 1200);
+    return;
+  }
+
+  // 3. 司馬懿 special attack
+  const simayi = G.enemies.find(e => e.key==='simayi' && e.alive);
+  let extraDelay = 0;
+  if (simayi && simayi.mp >= 20 && Math.random() < 0.35) {
+    simayi.mp -= 20;
+    const t = alive(G.players)[0];
+    if (t) {
+      const evS = getEvMods();
+      const dmg = Math.round(calcDmg(simayi.atk * 1.5 * evS.eAtk, t.def) * evS.pDmg);
+      applyDmg(t, dmg);
+      log(`司馬懿 發動【強攻】！${t.name} 受到 ${dmg} 傷害！`, 'log-tactic');
+      extraDelay = 400;
+      animAtk('sprite-simayi','sprite-'+t.key,'r',null);
+    }
+  }
+
+  // 4. Regular enemy attacks (staggered)
+  const enemyList = alive(G.enemies).filter(e => e.key !== 'simayi' || extraDelay===0);
+  let delay = extraDelay;
+  enemyList.forEach(e => {
+    delay += 550;
+    setTimeout(() => {
+      const targets = alive(G.players);
+      if (!targets.length) return;
+
+      let target;
+      if (e.key==='zhangHe') {
+        target = targets.reduce((a,b) => a.hp<b.hp?a:b);
+      } else {
+        target = targets[rnd(0, targets.length-1)];
+      }
+
+      const ignDef = e.key==='dengAi';
+      const evE = getEvMods();
+      const atkMult = (G.buffs.enemyAtk>0 ? 0.6 : 1) * evE.eAtk;
+      const defMult = G.buffs.playerDef>0 ? 0.45 : 1;
+      const dmg = Math.round(calcDmg(e.atk * atkMult, target.def * defMult, ignDef) * evE.pDmg);
+      applyDmg(target, dmg);
+
+      if (ignDef) log(`${e.name} 發動【遠程射擊】！無視防禦！${target.name} 受到 ${dmg} 傷害！`, 'log-tactic');
+      else        log(`${e.name} 攻擊 ${target.name}，造成 ${dmg} 傷害！`, 'log-atk');
+
+      animAtk('sprite-'+e.key, 'sprite-'+target.key, 'r', null);
+      refreshPartial();
+
+      if (!alive(G.players).length) setTimeout(() => endBattle('lose'), 600);
+    }, delay);
+  });
+
+  setTimeout(() => {
+    if (!alive(G.players).length) return;
+    checkIntrudesThen(finishEnemyTurn);
+  }, delay + 300);
+}
+
+function finishEnemyTurn() {
+  if (G.buffs.playerDef>0) G.buffs.playerDef--;
+  if (G.buffs.enemyAtk>0)  G.buffs.enemyAtk--;
+
+  // 隨機事件倒數
+  if (G.activeEvent) {
+    G.activeEvent.turns--;
+    if (G.activeEvent.turns <= 0) {
+      log(`　　【${G.activeEvent.def.name}】效果消退。`, 'log-system');
+      G.activeEvent = null;
+    }
+  }
+
+  G.turn++;
+  if (checkEnd()) return;
+
+  // 新回合 45% 機率觸發隨機事件（無事件時）
+  if (!G.activeEvent && Math.random() < 0.45) rollEvent();
+
+  G.phase = 'player';
+  G.playerIdx = 0;
+  while (G.playerIdx < G.players.length && !G.players[G.playerIdx].alive) G.playerIdx++;
+
+  log(`── 第 ${G.turn} 回合 ──`, 'log-system');
+  G.cmdMode = 'main';
+  refreshPartial();
+}
+
+// ════════════════════════
+//  DAMAGE
+// ════════════════════════
+function applyDmg(c, dmg) {
+  c.hp = Math.max(0, c.hp - dmg);
+  if (c.hp===0) { c.alive=false; log(`${c.name} 倒下！`, 'log-system'); }
+}
+
+// ════════════════════════
+//  ANIMATIONS
+// ════════════════════════
+function animAtk(atkId, tgtId, dir, cb) {
+  const atkEl = document.getElementById(atkId);
+  const tgtEl = document.getElementById(tgtId);
+
+  if (atkEl) {
+    const cls = dir==='l' ? 'anim-atk-l' : 'anim-atk-r';
+    atkEl.classList.add(cls);
+    setTimeout(() => atkEl.classList.remove(cls), 360);
+  }
+  if (tgtEl) {
+    setTimeout(() => {
+      tgtEl.classList.add('anim-hit');
+      addFlash(tgtEl);
+      setTimeout(() => tgtEl.classList.remove('anim-hit'), 220);
+    }, 180);
+  }
+  setTimeout(() => { refreshHpBars(); if (cb) cb(); }, 420);
+}
+
+function addFlash(el) {
+  const fl = document.createElement('div');
+  fl.className = 'flash-overlay';
+  el.style.position = 'relative';
+  el.appendChild(fl);
+  setTimeout(() => fl.remove(), 350);
+}
+
+// ── 計策視覺特效 ──────────────────────
+const TACTIC_FX = {
+  huogong:     { icons:['🔥','🔥','🔥','🔥','🔥','🔥','🔥'], anim:'fxFireFall',   dur:900,  size:30, zone:'enemy',  flash:'rgba(255,80,0,.35)',    spread:true  },
+  kongchengji: { icons:['🎵','🎶','🎵','🎶','🎵','🎵'],       anim:'fxMusicFloat', dur:1100, size:26, zone:'full',   flash:'rgba(180,180,255,.2)',   spread:true  },
+  yibing:      { icons:['👻','👻','💨','👻','💨','👻'],       anim:'fxPhantomPop', dur:1000, size:28, zone:'enemy',  flash:'rgba(60,80,200,.2)',     spread:true  },
+  bagua:       { icons:['☯️','⭐','✦','☯️','⭐','✦'],        anim:'fxBaguaSpin',  dur:1000, size:28, zone:'player', flash:'rgba(255,210,0,.25)',    spread:true  },
+  yuancheng:   { icons:['➤','➤','➤'],                        anim:'fxArrowFly',   dur:550,  size:28, zone:'arrow',  flash:'rgba(80,200,100,.18)',   spread:false },
+  qiangong:    { icons:['⚡','⚔️','💥','⚡'],                 anim:'fxSlash',      dur:700,  size:30, zone:'enemy',  flash:'rgba(220,0,0,.3)',       spread:true  },
+};
+
+function showTacticFX(tid) {
+  const wrap = document.querySelector('.battle-wrap');
+  if (!wrap) return;
+  const cfg = TACTIC_FX[tid];
+  if (!cfg) return;
+
+  const layer = document.createElement('div');
+  layer.className = 'fx-layer';
+  wrap.appendChild(layer);
+
+  // 全畫面色光閃爍
+  if (cfg.flash) {
+    const fl = document.createElement('div');
+    fl.style.cssText = `position:absolute;inset:0;background:${cfg.flash};animation:fxFlash ${cfg.dur * .7}ms ease forwards`;
+    layer.appendChild(fl);
+  }
+
+  cfg.icons.forEach((icon, i) => {
+    const el = document.createElement('div');
+    const d = cfg.dur + rnd(-80, 80);
+    const delay = cfg.spread ? i * 90 : i * 130;
+    el.style.cssText = `position:absolute;font-size:${cfg.size}px;line-height:1;animation:${cfg.anim} ${d}ms ease ${delay}ms both;`;
+
+    if (cfg.zone === 'enemy') {
+      el.style.left = rnd(50, 88) + '%';
+      el.style.top  = rnd(8, 58) + '%';
+    } else if (cfg.zone === 'player') {
+      el.style.left = rnd(4, 42) + '%';
+      el.style.top  = rnd(8, 58) + '%';
+    } else if (cfg.zone === 'full') {
+      el.style.left = rnd(6, 88) + '%';
+      el.style.top  = rnd(8, 65) + '%';
+    } else if (cfg.zone === 'arrow') {
+      el.style.left = '8%';
+      el.style.top  = rnd(20, 60) + '%';
+      el.style.fontSize = '34px';
+    }
+    el.textContent = icon;
+    layer.appendChild(el);
+  });
+
+  const total = cfg.dur + cfg.icons.length * 90 + 300;
+  setTimeout(() => layer.remove(), total);
+}
+
+// ════════════════════════
+//  INTRUDE SYSTEM
+// ════════════════════════
+function checkIntrudesThen(cb) {
+  if (G.stageKey !== 'xicheng') { cb(); return; }
+  const rules = INTRUDES.xicheng;
+  for (const r of rules) {
+    if (r.done) continue;
+    if (evalCond(r.cond)) {
+      r.done = true;
+      G.pendingIntrude = { side:r.side, charKey:r.key, charObj:makeChar(r.key), cb };
+      render();
+      return;
+    }
+  }
+  cb();
+}
+
+function evalCond(cond) {
+  switch(cond.type) {
+    case 'turn':       return G.turn >= cond.num;
+    case 'tacticsUsed':return G.tacticsUsed >= cond.num;
+    case 'playerHpPct': {
+      const al = alive(G.players);
+      if (!al.length) return false;
+      const tot = al.reduce((s,c)=>s+c.hp,0);
+      const max = al.reduce((s,c)=>s+c.maxHp,0);
+      return tot/max <= cond.pct;
+    }
+    case 'enemyHpPct': {
+      const al = alive(G.enemies);
+      if (!al.length) return false;
+      const tot = al.reduce((s,c)=>s+c.hp,0);
+      const max = al.reduce((s,c)=>s+c.maxHp,0);
+      return tot/max <= cond.pct;
+    }
+    default: return false;
+  }
+}
+
+function confirmIntrude() {
+  const { side, charKey, charObj, cb } = G.pendingIntrude;
+  G.pendingIntrude = null;
+
+  if (side==='player') {
+    G.players.push(charObj);
+    log(`🌟 ${charObj.name} 亂入！加入我方！`, 'log-intrude');
+  } else {
+    G.enemies.push(charObj);
+    log(`⚠ ${charObj.name} 亂入！加入敵方！`, 'log-intrude');
+  }
+
+  render();
+  if (cb) setTimeout(cb, 300);
+}
+
+// ════════════════════════
+//  WIN / LOSE
+// ════════════════════════
+function checkEnd() {
+  if (!alive(G.players).length) { endBattle('lose'); return true; }
+  if (!alive(G.enemies).length) { endBattle('win');  return true; }
+  return false;
+}
+
+function endBattle(type) {
+  stopBGM();
+  G.endingType = type;
+  G.screen = 'ending';
+  render();
+}
+
+// ════════════════════════
+//  STORY HELPERS
+// ════════════════════════
+function startStory(key) {
+  G.screen = 'story';
+  G.storyScript = STORIES[key];
+  G.storyIdx = 0;
+  render();
+}
+
+// ════════════════════════
+//  BGM  (HTML5 Audio)
+// ════════════════════════
+const _bgmAudio = new Audio('battle_bgm.m4a');
+_bgmAudio.loop   = true;
+_bgmAudio.volume = 0.75;
+let _bgmOn = false;
+
+function startBGM() {
+  if (_bgmOn) return;
+  _bgmOn = true;
+  _bgmAudio.currentTime = 0;
+  _bgmAudio.play().catch(() => {});
+  updateMuteBtn();
+}
+
+function stopBGM() {
+  _bgmOn = false;
+  _bgmAudio.pause();
+  _bgmAudio.currentTime = 0;
+  updateMuteBtn();
+}
+
+function toggleBGM() { _bgmOn ? stopBGM() : startBGM(); }
+
+function updateMuteBtn() {
+  const btn = document.getElementById('mute-btn');
+  if (btn) btn.textContent = _bgmOn ? '🔊' : '🔇';
+}
+
+// Boot
+render();
+</script>
+</body>
+</html>

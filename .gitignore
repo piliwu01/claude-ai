@@ -1,0 +1,44 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# 大型二進位 / 媒體
+*.m4a
+*.mp4
+*.mp3
+*.zip
+*.pptx
+*.xlsx
+*.xls
+*.docx
+*.pdf
+
+# 系統
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude 本地設定
+.claude/settings.local.json
+.agents/
+
+# 暫存
+*.tmp
+*.log
+exam_raw.txt
+
+# 內嵌 git repo（獨立管理）
+Users北興Desktopnotebooklm-py/
+exam-ticiu/
+exam-ticiu2/
+wordcloud/

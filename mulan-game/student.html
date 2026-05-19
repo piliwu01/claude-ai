@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>木蘭傳 — 學生投票</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: '微軟正黑體', 'PingFang TC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pixel { font-family: 'Press Start 2P', monospace; }
+
+  /* Header */
+  .header {
+    background: #16213e;
+    border-bottom: 3px solid #e94560;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .header-title { font-family: 'Press Start 2P', monospace; font-size: 12px; color: #e94560; }
+  .header-sub { font-size: 13px; color: #4ecdc4; margin-top: 5px; }
+  .header-hp { font-size: 11px; color: #f5a623; margin-top: 3px; }
+
+  /* Main content */
+  .content {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Cards */
+  .card {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    padding: 14px 16px;
+  }
+  .card-label {
+    font-size: 10px;
+    color: #4ecdc4;
+    margin-bottom: 8px;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  /* Stage badge */
+  .stage-badge {
+    background: #0f3460;
+    border: 2px solid #4ecdc4;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: #fff;
+  }
+
+  /* Question */
+  .question-text {
+    font-size: 17px;
+    line-height: 1.8;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  /* Timer */
+  .timer-wrap { text-align: center; }
+  .timer-num {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 36px;
+    color: #f5a623;
+    line-height: 1;
+  }
+  .timer-num.urgent { color: #e94560; animation: pulse 0.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .timer-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border: 1px solid #555;
+    margin-top: 8px;
+  }
+  .timer-bar-fill {
+    height: 100%;
+    background: #f5a623;
+    transition: width 1s linear;
+  }
+
+  /* Answer buttons */
+  .answer-btn {
+    width: 100%;
+    padding: 16px 14px;
+    background: #0f3460;
+    border: 2px solid #3498db;
+    color: white;
+    font-family: '微軟正黑體', 'PingFang TC', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .answer-btn:active { transform: scale(0.98); }
+  .answer-btn.selected { background: #e94560; border-color: #e94560; }
+  .answer-btn.correct  { background: #27ae60; border-color: #2ecc71; }
+  .answer-btn.wrong    { background: #555;    border-color: #888;    opacity: 0.7; }
+  .answer-key {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #f5a623;
+    min-width: 18px;
+  }
+  .answer-btn.selected .answer-key,
+  .answer-btn.correct  .answer-key { color: #fff; }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #27ae60;
+    border: none;
+    color: white;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .submit-btn:disabled { background: #555; cursor: not-allowed; color: #888; }
+  .submit-btn:not(:disabled):active { background: #1e8449; }
+
+  /* Status messages */
+  .status-box {
+    text-align: center;
+    padding: 30px 20px;
+  }
+  .status-icon { font-size: 48px; margin-bottom: 12px; }
+  .status-title { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #4ecdc4; margin-bottom: 8px; }
+  .status-sub { font-size: 14px; color: #aaa; line-height: 1.6; }
+
+  /* Damage display */
+  .damage-box {
+    background: #0f3460;
+    border: 2px solid #e94560;
+    padding: 16px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .damage-label { font-size: 11px; color: #e94560; margin-bottom: 6px; font-family: 'Press Start 2P', monospace; }
+  .damage-value { font-family: 'Press Start 2P', monospace; font-size: 28px; color: #f5a623; }
+
+  /* Group select */
+  .group-btn {
+    width: 100%;
+    padding: 18px;
+    margin-bottom: 12px;
+    background: #0f3460;
+    border: 2px solid #3498db;
+    color: white;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .group-btn:active { background: #3498db; }
+
+  /* HP bar */
+  .hp-bar-bg { width:100%; height:12px; background:#333; border:1px solid #555; margin-top:4px; }
+  .hp-bar-fill { height:100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.5s; }
+  .hp-bar-fill.mid { background: linear-gradient(90deg, #f39c12, #f5a623); }
+  .hp-bar-fill.low { background: linear-gradient(90deg, #c0392b, #e94560); }
+
+  /* Screen management */
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header" id="mainHeader">
+  <div class="header-title">⚔ 木蘭傳</div>
+  <div class="header-sub" id="headerGroup">學生投票系統</div>
+  <div class="header-hp" id="headerHp"></div>
+</div>
+
+<!-- Screen: 選組別 -->
+<div id="screenGroup" class="screen active">
+  <div class="content">
+    <div class="status-box">
+      <div class="status-icon">⚔️</div>
+      <div class="status-title">選擇你的組別</div>
+      <div class="status-sub">加入後本場遊戲不能換組</div>
+    </div>
+    <button class="group-btn" onclick="joinGroup('A')">🔴 A 組</button>
+    <button class="group-btn" onclick="joinGroup('B')">🟠 B 組</button>
+    <button class="group-btn" onclick="joinGroup('C')">🟢 C 組</button>
+  </div>
+</div>
+
+<!-- Screen: 等待 -->
+<div id="screenWait" class="screen">
+  <div class="content">
+    <div class="status-box">
+      <div class="status-icon" id="waitIcon">⏳</div>
+      <div class="status-title" id="waitTitle">等待老師出題</div>
+      <div class="status-sub" id="waitSub">老師按下「開始投票」後，題目會出現在這裡</div>
+    </div>
+    <div class="card" id="groupHpCard" style="display:none;">
+      <div class="card-label">🛡 你的組別</div>
+      <div id="groupHpInfo" style="font-size:14px;color:#fff;"></div>
+      <div class="hp-bar-bg"><div class="hp-bar-fill" id="groupHpBar" style="width:100%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen: 作答 -->
+<div id="screenVote" class="screen">
+  <div class="content">
+    <div class="stage-badge" id="stageBadge">第 1 關・從軍報名・第 1 題</div>
+
+    <div class="card" style="border-color:#f5a623;">
+      <div class="card-label">▶ 題目</div>
+      <div class="question-text" id="questionText">載入中...</div>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-num" id="timerNum">30</div>
+      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerBar" style="width:100%"></div></div>
+    </div>
+
+    <div id="answerOptions"></div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitVote()" disabled>請先選擇答案</button>
+  </div>
+</div>
+
+<!-- Screen: 等待公布 -->
+<div id="screenSubmitted" class="screen">
+  <div class="content">
+    <div class="status-box">
+      <div class="status-icon">✅</div>
+      <div class="status-title">已送出！</div>
+      <div class="status-sub">等待老師公布答案...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen: 答案公布 -->
+<div id="screenResult" class="screen">
+  <div class="content">
+    <div class="card" id="resultCard">
+      <div class="card-label">✅ 正確答案</div>
+      <div id="resultAnswerText" style="font-size:16px;color:#2ecc71;font-weight:bold;"></div>
+    </div>
+    <div id="resultOptions"></div>
+    <div class="damage-box" id="damageBox" style="display:none;">
+      <div class="damage-label">💥 你們組造成的傷害</div>
+      <div class="damage-value" id="damageValue">0</div>
+    </div>
+    <div class="status-box" style="padding:16px 0 0;">
+      <div class="status-sub">等待老師進入下一題...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen: 遊戲結束 -->
+<div id="screenEnd" class="screen">
+  <div class="content">
+    <div class="status-box">
+      <div class="status-icon">🎉</div>
+      <div class="status-title">遊戲結束！</div>
+      <div class="status-sub" id="endMsg">感謝參與《木蘭傳》！</div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhoPhZsWjqvyxo8WrHtryABL9AyDYuZW0",
+  authDomain: "mulan-game.firebaseapp.com",
+  databaseURL: "https://mulan-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mulan-game",
+  storageBucket: "mulan-game.firebasestorage.app",
+  messagingSenderId: "669570235600",
+  appId: "1:669570235600:web:e0637cbab41ccad6b3b2d5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+// 題目資料（與 questions.js 相同，內嵌避免額外請求）
+const STAGES = [
+  { id:1, name:"從軍報名", questions:[
+    { text:"「唧唧復唧唧」中，「唧唧」是什麼聲音？", options:["蟲鳴聲","織布機聲","嘆息聲","馬蹄聲"], answer:1 },
+    { text:"木蘭為何決定從軍？", options:["想建功立業","父親年邁無兄長可替","被迫徵召","想逃婚"], answer:1 },
+    { text:"「東市買駿馬，西市買鞍韉」顯示木蘭做了什麼準備？", options:["四處採買、全副武裝備戰","雇用僕從","向親友借錢","偷竊軍糧"], answer:0 },
+    { text:"「旦辭爺娘去，暮宿黃河邊」說明木蘭出發的速度如何？", options:["走走停停","迷路了","行軍迅速","留戀故鄉"], answer:2 },
+    { text:"「不聞爺娘喚女聲，但聞燕山胡騎鳴啾啾」，這句話表達了什麼情感？", options:["興奮期待","思鄉之情與戰場的對比","對父母的憤怒","對敵人的恐懼"], answer:1 }
+  ]},
+  { id:2, name:"沙場征戰", questions:[
+    { text:"「萬里赴戎機」中「戎機」是什麼意思？", options:["戰事、軍機要務","戎狄的機關陷阱","兵器名稱","軍糧補給"], answer:0 },
+    { text:"「關山度若飛」運用了什麼修辭？", options:["對偶","誇飾（誇張）","擬人","排比"], answer:1 },
+    { text:"木蘭在戰場上征戰幾年？", options:["三年","五年","十二年","一年"], answer:2 },
+    { text:"「朔氣傳金柝，寒光照鐵衣」描寫的是什麼場景？", options:["班師回朝的慶典","夜晚寒冷的軍營","激烈的戰鬥","木蘭思家"], answer:1 },
+    { text:"「將軍百戰死，壯士十年歸」用了什麼句法？", options:["問答","互文","比喻","頂真"], answer:1 }
+  ]},
+  { id:3, name:"凱旋班師", questions:[
+    { text:"「歸來見天子，天子坐明堂」中，「明堂」是指？", options:["明亮的大廳","天子接見朝臣的正殿","軍事會議室","木蘭的家"], answer:1 },
+    { text:"天子給木蘭的獎賞中，哪一項是木蘭主動拒絕的？", options:["賞賜金錢","尚書郎（官職）","返鄉假期","錦緞布料"], answer:1 },
+    { text:"木蘭請求天子讓她回家，她最渴望的是什麼？", options:["嫁給將軍","回到父母身邊","開設武館","繼續從軍"], answer:1 },
+    { text:"「願借明駝千里足」中「明駝」是什麼？", options:["一種快馬","能日行千里的駱駝","一種飛鳥","神話生物"], answer:1 },
+    { text:"木蘭辭官不受，體現了她哪種價值觀？", options:["貪圖享樂","孝順、不慕名利","膽小怕事","瞧不起官場"], answer:1 }
+  ]},
+  { id:4, name:"辭官不受", questions:[
+    { text:"木蘭回到家後，最先做的事是什麼？", options:["睡覺","開門見父母","換上戎裝","宴請將士"], answer:1 },
+    { text:"「當窗理雲鬢，對鏡貼花黃」說明木蘭恢復了什麼？", options:["戰士的裝扮","女兒的裝扮","官員的服裝","農民的打扮"], answer:1 },
+    { text:"「出門看火伴，火伴皆驚忙」，夥伴們震驚的原因是什麼？", options:["木蘭帶回很多戰利品","才發現木蘭是女生","木蘭受了重傷","木蘭帶回敵將"], answer:1 },
+    { text:"「同行十二年，不知木蘭是女郎」，這說明木蘭有什麼能力？", options:["使用魔法","長期隱瞞身份、英勇過人","不說話","偽裝成老人"], answer:1 },
+    { text:"以下哪個詞最能形容木蘭的性格？", options:["衝動魯莽","孝順勇敢、淡泊名利","自私自利","膽怯懦弱"], answer:1 }
+  ]},
+  { id:5, name:"還我女兒身", questions:[
+    { text:"「雄兔腳撲朔，雌兔眼迷離」這個比喻的用意是？", options:["形容兔子很可愛","說明雌雄難辨，反問別人怎能識破她","批評木蘭行為","形容戰場混亂"], answer:1 },
+    { text:"「雙兔傍地走，安能辨我是雄雌」是全詩的什麼部分？", options:["開頭","轉折","結尾（卒章顯志）","高潮"], answer:2 },
+    { text:"木蘭詩的主題是什麼？（選最佳答案）", options:["歌頌戰爭的榮耀","讚揚女性的孝道、勇敢與智慧","批評朝廷腐敗","描述古代交通"], answer:1 },
+    { text:"木蘭詩屬於哪種文學體裁？", options:["律詩","絕句","樂府詩","詞"], answer:2 },
+    { text:"【討論題】如果你是木蘭，你會做出相同的選擇嗎？（任何答案都算對！）", options:["會，因為家人最重要","會，因為想保護國家","不會，有更好的方式","需要看情況"], answer:-1 }
+  ]}
+];
+
+// 狀態
+let myGroup = localStorage.getItem('mulan_group') || null;
+let myUid = null;
+let currentGameState = null;
+let hasVoted = false;
+let myAnswer = null;
+let timerInterval = null;
+
+// 從 Firebase 載入自訂題目（若有）
+async function loadCustomQuestions() {
+  const snap = await get(ref(db, 'custom_questions'));
+  const custom = snap.val();
+  if (!custom) return;
+  Object.keys(custom).forEach(stageIdx => {
+    const idx = parseInt(stageIdx);
+    if (STAGES[idx] && custom[idx]) {
+      STAGES[idx].questions = custom[idx];
+    }
+  });
+}
+
+// 匿名登入
+loadCustomQuestions().then(() => {
+signInAnonymously(auth).then(cred => {
+  myUid = cred.user.uid;
+  if (myGroup) {
+    showScreen('screenWait');
+    updateHeader();
+  }
+  listenToGame();
+}).catch(console.error);
+}); // end loadCustomQuestions
+
+// 監聽遊戲狀態
+function listenToGame() {
+  onValue(ref(db, 'game'), snap => {
+    currentGameState = snap.val();
+    if (!currentGameState) return;
+    handleGameState(currentGameState);
+  });
+
+  // 監聽我的組別HP
+  if (myGroup) {
+    onValue(ref(db, `groups/${myGroup}`), snap => {
+      const data = snap.val();
+      if (!data) return;
+      updateGroupHp(data.hp, data.maxHp || 100);
+    });
+  }
+}
+
+function handleGameState(state) {
+  if (!myGroup) return; // 還沒選組
+
+  const status = state.status;
+
+  if (status === 'idle') {
+    showScreen('screenWait');
+    document.getElementById('waitIcon').textContent = '⏳';
+    document.getElementById('waitTitle').textContent = '等待老師開始';
+    document.getElementById('waitSub').textContent = '老師按下「開始投票」後，題目會出現在這裡';
+    hasVoted = false;
+    myAnswer = null;
+  }
+  else if (status === 'voting') {
+    if (hasVoted) {
+      showScreen('screenSubmitted');
+    } else {
+      showVoteScreen(state);
+    }
+  }
+  else if (status === 'revealed') {
+    showResultScreen(state);
+  }
+  else if (status === 'ended') {
+    showScreen('screenEnd');
+  }
+}
+
+function showVoteScreen(state) {
+  hasVoted = false;
+  myAnswer = null;
+  showScreen('screenVote');
+
+  const stageIdx = (state.stage || 1) - 1;
+  const qIdx = state.question_index || 0;
+  const stage = STAGES[stageIdx];
+  const q = stage ? stage.questions[qIdx] : null;
+  if (!q) return;
+
+  document.getElementById('stageBadge').textContent =
+    `第 ${state.stage} 關・${stage.name}・第 ${qIdx + 1} 題`;
+  document.getElementById('questionText').textContent = q.text;
+
+  // 渲染選項
+  const container = document.getElementById('answerOptions');
+  container.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<span class="answer-key">${labels[i]}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i, btn, container);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = '請先選擇答案';
+
+  // 倒數計時
+  startTimer(state.timer_end);
+}
+
+function selectAnswer(idx, btn, container) {
+  if (hasVoted) return;
+  myAnswer = idx;
+  container.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = false;
+  submitBtn.textContent = '確認送出 ✓';
+}
+
+function startTimer(endTimestamp) {
+  if (timerInterval) clearInterval(timerInterval);
+  const total = 30;
+
+  const tick = () => {
+    const now = Date.now();
+    const remaining = Math.max(0, Math.ceil((endTimestamp - now) / 1000));
+    const numEl = document.getElementById('timerNum');
+    const barEl = document.getElementById('timerBar');
+    if (numEl) {
+      numEl.textContent = remaining;
+      numEl.className = 'timer-num' + (remaining <= 10 ? ' urgent' : '');
+    }
+    if (barEl) barEl.style.width = (remaining / total * 100) + '%';
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (!hasVoted) autoSubmit();
+    }
+  };
+  tick();
+  timerInterval = setInterval(tick, 500);
+}
+
+function autoSubmit() {
+  if (hasVoted) return;
+  hasVoted = true;
+  showScreen('screenSubmitted');
+  // 不記錄投票（時間到未作答）
+}
+
+window.submitVote = function() {
+  if (hasVoted || myAnswer === null) return;
+  hasVoted = true;
+  if (timerInterval) clearInterval(timerInterval);
+
+  // 寫入 Firebase
+  set(ref(db, `ballots/${myUid}`), {
+    group: myGroup,
+    answer: myAnswer,
+    ts: Date.now()
+  });
+
+  showScreen('screenSubmitted');
+};
+
+function showResultScreen(state) {
+  showScreen('screenResult');
+  const stageIdx = (state.stage || 1) - 1;
+  const qIdx = state.question_index || 0;
+  const stage = STAGES[stageIdx];
+  const q = stage ? stage.questions[qIdx] : null;
+  if (!q) return;
+
+  const labels = ['A', 'B', 'C', 'D'];
+  const isDiscussion = q.answer === -1;
+
+  document.getElementById('resultAnswerText').textContent =
+    isDiscussion ? '討論題！大家的答案都對 🎉' :
+    `${labels[q.answer]}・${q.options[q.answer]}`;
+
+  // 顯示選項對錯
+  const container = document.getElementById('resultOptions');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    const isCorrect = isDiscussion || i === q.answer;
+    const isMine = i === myAnswer;
+    btn.className = 'answer-btn' + (isCorrect ? ' correct' : ' wrong');
+    btn.innerHTML = `<span class="answer-key">${labels[i]}</span>${opt}${isMine ? ' ← 你選的' : ''}`;
+    btn.style.cursor = 'default';
+    container.appendChild(btn);
+  });
+
+  // 顯示傷害
+  const damageBox = document.getElementById('damageBox');
+  if (state.last_damage && state.last_damage[myGroup] !== undefined) {
+    damageBox.style.display = 'block';
+    document.getElementById('damageValue').textContent =
+      `${state.last_damage[myGroup]} 傷害 ⚔️`;
+  } else {
+    damageBox.style.display = 'none';
+  }
+}
+
+function updateGroupHp(hp, maxHp) {
+  const pct = Math.max(0, hp / maxHp * 100);
+  const bar = document.getElementById('groupHpBar');
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.className = 'hp-bar-fill' + (pct > 60 ? '' : pct > 30 ? ' mid' : ' low');
+  }
+  const info = document.getElementById('groupHpInfo');
+  if (info) info.textContent = `${myGroup} 組　HP：${hp} / ${maxHp}`;
+  document.getElementById('groupHpCard').style.display = 'block';
+  document.getElementById('headerHp').textContent = `HP ${hp}/${maxHp}`;
+}
+
+// 選組別
+window.joinGroup = function(group) {
+  myGroup = group;
+  localStorage.setItem('mulan_group', group);
+  updateHeader();
+  showScreen('screenWait');
+
+  // 監聽組別HP
+  onValue(ref(db, `groups/${myGroup}`), snap => {
+    const data = snap.val();
+    if (!data) return;
+    updateGroupHp(data.hp, data.maxHp || 100);
+  });
+
+  if (currentGameState) handleGameState(currentGameState);
+};
+
+function updateHeader() {
+  const groupNames = { A: '🔴 A 組', B: '🟠 B 組', C: '🟢 C 組' };
+  document.getElementById('headerGroup').textContent = groupNames[myGroup] || '';
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// 如果已有組別，直接跳過選組畫面
+if (myGroup) {
+  showScreen('screenWait');
+  updateHeader();
+}
+</script>
+</body>
+</html>

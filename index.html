@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>114學年度國中國文測驗－題辭與柬帖互動練習</title>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --card-bg: #fff;
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --text: #1e293b;
+  --sub: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* 頁首 */
+.hero {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: #fff;
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+}
+.hero h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: .05em; }
+.hero p { margin-top: .5rem; font-size: .95rem; opacity: .85; }
+.hero .stats {
+  margin-top: 1rem;
+  display: flex; justify-content: center; gap: 2rem;
+  font-size: .9rem;
+}
+.hero .stat { background: rgba(255,255,255,.15); border-radius: 8px; padding: .4rem 1rem; }
+
+/* 導覽列 */
+.nav-bar {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: .6rem 1rem;
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+.nav-btn {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: none;
+  border-radius: 20px;
+  padding: .35rem .85rem;
+  font-size: .85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: .15s;
+  white-space: nowrap;
+}
+.nav-btn:hover { background: var(--primary); color: #fff; }
+
+/* 主體 */
+main { padding: 1.5rem 1rem 3rem; max-width: 1400px; margin: 0 auto; }
+
+/* 類別標題 */
+.category-section { margin-bottom: 2.5rem; }
+.cat-title {
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  padding-left: .75rem;
+  border-left: 4px solid var(--primary);
+}
+.cat-title .count { font-size: .85rem; color: var(--sub); font-weight: 400; }
+
+/* 橫向捲動行 */
+.cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* 題目卡片 */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 320px;
+  cursor: pointer;
+  transition: box-shadow .2s, border-color .2s;
+  overflow: hidden;
+}
+.card:hover { box-shadow: 0 4px 16px rgba(37,99,235,.13); border-color: #93c5fd; }
+.card.active { border-color: var(--primary); }
+
+.card-header {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1rem .5rem;
+}
+.q-num {
+  font-size: .75rem; font-weight: 700;
+  background: var(--primary); color: #fff;
+  border-radius: 20px; padding: .15rem .6rem;
+  white-space: nowrap;
+}
+.section-tag {
+  font-size: .7rem;
+  background: #f1f5f9; color: var(--sub);
+  border-radius: 20px; padding: .1rem .5rem;
+  white-space: nowrap;
+}
+.expand-icon {
+  margin-left: auto;
+  font-size: 1.2rem; color: var(--sub);
+  transition: transform .2s;
+  line-height: 1;
+}
+.card.active .expand-icon { transform: rotate(45deg); color: var(--primary); }
+
+.q-text {
+  font-size: .9rem;
+  padding: 0 1rem .75rem;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all .2s;
+}
+.card.active .q-text {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* 展開內容 */
+.card-body {
+  display: none;
+  padding: 0 1rem 1rem;
+  border-top: 1px dashed var(--border);
+  margin-top: .25rem;
+  padding-top: .75rem;
+}
+.card.active .card-body { display: block; }
+
+.options { margin-bottom: .75rem; }
+.option {
+  font-size: .85rem;
+  padding: .3rem .5rem;
+  border-radius: 6px;
+  margin-bottom: .25rem;
+  background: #f8fafc;
+}
+.option.correct { background: var(--green-light); color: var(--green); font-weight: 600; }
+.option.wrong { background: #fef2f2; color: #dc2626; text-decoration: line-through; opacity: .7; }
+
+.show-ans-btn {
+  width: 100%;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .5rem;
+  font-size: .9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: .15s;
+}
+.show-ans-btn:hover { background: #15803d; }
+.show-ans-btn:disabled { background: #94a3b8; cursor: default; }
+
+.answer-block { margin-top: .75rem; }
+.answer-line {
+  font-size: .9rem;
+  background: var(--green-light);
+  color: var(--green);
+  border-radius: 8px;
+  padding: .5rem .75rem;
+  margin-bottom: .5rem;
+}
+.explanation {
+  font-size: .82rem;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  color: #92400e;
+  padding: .5rem .75rem;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.6;
+}
+
+/* 頁尾 */
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: .8rem;
+  color: var(--sub);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  .card { width: 100%; }
+  .hero h1 { font-size: 1.2rem; }
+  .hero .stats { gap: .75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>114 學年度國中國文測驗</h1>
+  <p>題辭與柬帖互動練習卷（含解析）</p>
+  <div class="stats">
+    <div class="stat">📝 共 75 題</div>
+    <div class="stat">🗂️ 共 10 大類</div>
+    <div class="stat">💡 含詳細解析</div>
+  </div>
+</div>
+
+<nav class="nav-bar">
+<button class="nav-btn" onclick="scrollTo_('婚嫁題辭')">💍 婚嫁題辭</button>
+<button class="nav-btn" onclick="scrollTo_('壽誕題辭')">🎂 壽誕題辭</button>
+<button class="nav-btn" onclick="scrollTo_('哀輓題辭')">🕯️ 哀輓題辭</button>
+<button class="nav-btn" onclick="scrollTo_('生育題辭')">👶 生育題辭</button>
+<button class="nav-btn" onclick="scrollTo_('比賽題辭')">🏆 比賽題辭</button>
+<button class="nav-btn" onclick="scrollTo_('開業題辭')">🏪 開業題辭</button>
+<button class="nav-btn" onclick="scrollTo_('搬遷題辭')">🏠 搬遷題辭</button>
+<button class="nav-btn" onclick="scrollTo_('師生_畢業題辭')">🎓 師生／畢業題辭</button>
+<button class="nav-btn" onclick="scrollTo_('柬帖知識')">📜 柬帖知識</button>
+<button class="nav-btn" onclick="scrollTo_('題辭概念')">📖 題辭概念</button>
+
+</nav>
+
+<main>
+
+<section class="category-section" id="cat-婚嫁題辭">
+  <h2 class="cat-title">💍 婚嫁題辭 <span class="count">(12 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q9" onclick="toggleCard('q9')">
+  <div class="card-header">
+    <span class="q-num">第 9 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">子瑜要恭喜好友書華結婚，下列題辭何者最恰當？</div>
+  <div class="card-body" id="body-q9">
+    <div class="options" id="opts-q9">
+<div class="option" data-letter="A">（Ａ）之子于歸</div>
+<div class="option" data-letter="B">（Ｂ）明珠入掌</div>
+<div class="option" data-letter="C">（Ｃ）鳳凰于飛</div>
+<div class="option" data-letter="D">（Ｄ）瑤池春永</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q9', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q9" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)嫁女(Ｂ)賀生女(Ｄ)賀女壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q17" onclick="toggleCard('q17')">
+  <div class="card-header">
+    <span class="q-num">第 17 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">雪熙要參加東萬和愛羅的婚禮，她應該在裝禮金的紅包袋上寫下下列哪個題辭最恰當？</div>
+  <div class="card-body" id="body-q17">
+    <div class="options" id="opts-q17">
+<div class="option" data-letter="A">（Ａ）瑤池春永</div>
+<div class="option" data-letter="B">（Ｂ）弄璋之喜</div>
+<div class="option" data-letter="C">（Ｃ）明珠入掌</div>
+<div class="option" data-letter="D">（Ｄ）珠聯璧合</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q17', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q17" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)祝女壽(Ｂ)祝生男(Ｃ)祝生女
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q21" onclick="toggleCard('q21')">
+  <div class="card-header">
+    <span class="q-num">第 21 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列選項中的題辭，何者用途與其他三者不同？</div>
+  <div class="card-body" id="body-q21">
+    <div class="options" id="opts-q21">
+<div class="option" data-letter="A">（Ａ）珠聯璧合</div>
+<div class="option" data-letter="B">（Ｂ）鶯遷喬木</div>
+<div class="option" data-letter="C">（Ｃ）鳳凰于飛</div>
+<div class="option" data-letter="D">（Ｄ）琴瑟和鳴</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q21', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q21" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)(Ｃ)(Ｄ)賀結婚(Ｂ)賀搬家
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q24" onclick="toggleCard('q24')">
+  <div class="card-header">
+    <span class="q-num">第 24 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">假設牛郎和織女終於獲准結婚，如果你要給他倆祝福，請問下列題辭，何者不適當？</div>
+  <div class="card-body" id="body-q24">
+    <div class="options" id="opts-q24">
+<div class="option" data-letter="A">（Ａ）永浴愛河</div>
+<div class="option" data-letter="B">（Ｂ）天上雙星</div>
+<div class="option" data-letter="C">（Ｃ）相親相愛</div>
+<div class="option" data-letter="D">（Ｄ）夫唱婦隨</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q24', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q24" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)賀人夫婦雙壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q27" onclick="toggleCard('q27')">
+  <div class="card-header">
+    <span class="q-num">第 27 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">王院長喜獲麟兒，信惠包了禮金以表祝賀。請問下列賀辭何者最適合填在禮金封套上？</div>
+  <div class="card-body" id="body-q27">
+    <div class="options" id="opts-q27">
+<div class="option" data-letter="A">（Ａ）明珠入掌</div>
+<div class="option" data-letter="B">（Ｂ）弄璋誌喜</div>
+<div class="option" data-letter="C">（Ｃ）之子于歸</div>
+<div class="option" data-letter="D">（Ｄ）文定吉祥</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q27', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q27" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀生女(Ｂ)賀生男(Ｃ)賀結婚(Ｄ)賀訂婚
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q34" onclick="toggleCard('q34')">
+  <div class="card-header">
+    <span class="q-num">第 34 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">「聽說巷口的陳太太要嫁女兒了，而且對方是個有為的青年才俊。」如果你要去喝喜酒，以下題辭何者最適合？</div>
+  <div class="card-body" id="body-q34">
+    <div class="options" id="opts-q34">
+<div class="option" data-letter="A">（Ａ）桃夭及時</div>
+<div class="option" data-letter="B">（Ｂ）喜比螽麟</div>
+<div class="option" data-letter="C">（Ｃ）樂享含飴</div>
+<div class="option" data-letter="D">（Ｄ）日月齊輝</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q34', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q34" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)賀生男(Ｃ)賀生孫(Ｄ)賀雙壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q36" onclick="toggleCard('q36')">
+  <div class="card-header">
+    <span class="q-num">第 36 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">愛力獅即將要從馬達加斯加島搬到臺灣居住，馬蹄傳了一封簡訊來祝賀他。請問簡訊上的賀詞，有可能是哪一個？</div>
+  <div class="card-body" id="body-q36">
+    <div class="options" id="opts-q36">
+<div class="option" data-letter="A">（Ａ）神仙眷屬</div>
+<div class="option" data-letter="B">（Ｂ）江山如畫</div>
+<div class="option" data-letter="C">（Ｃ）安土敦仁</div>
+<div class="option" data-letter="D">（Ｄ）金匱石室</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q36', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q36" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀結婚(Ｂ)題名勝(Ｃ)賀搬家(Ｄ)賀書店
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q42" onclick="toggleCard('q42')">
+  <div class="card-header">
+    <span class="q-num">第 42 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">牛郎和織女結婚後，隔年生了一位千金，如果你要給他倆祝福，請問下列題辭，何者不適當？</div>
+  <div class="card-body" id="body-q42">
+    <div class="options" id="opts-q42">
+<div class="option" data-letter="A">（Ａ）綠鳳新雛</div>
+<div class="option" data-letter="B">（Ｂ）明珠入掌</div>
+<div class="option" data-letter="C">（Ｃ）啼試英聲</div>
+<div class="option" data-letter="D">（Ｄ）彩鳳新雛</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q42', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q42" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)(Ｂ)(Ｄ)賀生女(Ｃ)賀生男
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q52" onclick="toggleCard('q52')">
+  <div class="card-header">
+    <span class="q-num">第 52 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">去年結婚的王老師，日前在醫院順利產下一個男嬰，同學們打算合資訂製一塊匾額祝賀。依你判斷，下列哪一項題辭適用？</div>
+  <div class="card-body" id="body-q52">
+    <div class="options" id="opts-q52">
+<div class="option" data-letter="A">（Ａ）桃李滿門</div>
+<div class="option" data-letter="B">（Ｂ）歐母遺風</div>
+<div class="option" data-letter="C">（Ｃ）福蔭子孫</div>
+<div class="option" data-letter="D">（Ｄ）瓜瓞綿綿</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q52', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q52" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)師長(Ｂ)節婦(Ｃ)新居落成
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q53" onclick="toggleCard('q53')">
+  <div class="card-header">
+    <span class="q-num">第 53 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">李東俊的爸媽明天要參加鄰居女兒的歸寧喜宴，請他在禮金的紅包上題辭，請問下列何者最適宜？</div>
+  <div class="card-body" id="body-q53">
+    <div class="options" id="opts-q53">
+<div class="option" data-letter="A">（Ａ）福壽仙儔</div>
+<div class="option" data-letter="B">（Ｂ）弄璋之喜</div>
+<div class="option" data-letter="C">（Ｃ）之子于歸</div>
+<div class="option" data-letter="D">（Ｄ）鶯遷喬木</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q53', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q53" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)祝雙壽(Ｂ)賀生子(Ｄ)賀遷居
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q65" onclick="toggleCard('q65')">
+  <div class="card-header">
+    <span class="q-num">第 65 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小雅的好姊妹結婚了，她想要在紅包袋上寫些祝福的話，下列何者最適合？</div>
+  <div class="card-body" id="body-q65">
+    <div class="options" id="opts-q65">
+<div class="option" data-letter="A">（Ａ）緣定三生</div>
+<div class="option" data-letter="B">（Ｂ）明珠入掌</div>
+<div class="option" data-letter="C">（Ｃ）金萱不老</div>
+<div class="option" data-letter="D">（Ｄ）珠聯璧合</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q65', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q65" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)用於賀訂婚(Ｂ)用於賀生女 (Ｃ)用於賀女壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q75" onclick="toggleCard('q75')">
+  <div class="card-header">
+    <span class="q-num">第 75 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小雅的好姊妹結婚了，她想要在紅包袋上寫些祝福的話，下列何者最適合？</div>
+  <div class="card-body" id="body-q75">
+    <div class="options" id="opts-q75">
+<div class="option" data-letter="A">（Ａ）緣定三生</div>
+<div class="option" data-letter="B">（Ｂ）明珠入掌</div>
+<div class="option" data-letter="C">（Ｃ）金萱不老</div>
+<div class="option" data-letter="D">（Ｄ）珠聯璧合</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q75', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q75" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)用於賀訂婚(Ｂ)用於賀生女 (Ｃ)用於賀女壽</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-壽誕題辭">
+  <h2 class="cat-title">🎂 壽誕題辭 <span class="count">(9 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q11" onclick="toggleCard('q11')">
+  <div class="card-header">
+    <span class="q-num">第 11 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">王建富教授70歲生日將至，學生們準備了一張祝壽賀卡，內容如下：上文畫線部分的詞語，何者應該加以修正？</div>
+  <div class="card-body" id="body-q11">
+    <div class="options" id="opts-q11">
+<div class="option" data-letter="A">（Ａ）福如東海</div>
+<div class="option" data-letter="B">（Ｂ）春風化雨</div>
+<div class="option" data-letter="C">（Ｃ）桃李滿門</div>
+<div class="option" data-letter="D">（Ｄ）仁心仁術</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q11', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q11" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ｄ)賀醫院開業
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q13" onclick="toggleCard('q13')">
+  <div class="card-header">
+    <span class="q-num">第 13 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">李老師受邀參加好友的喜宴，抵達飯店後發現同一層樓同時有多場宴客：文定、壽宴、開業、以及新居落成。她一時忘了是哪一場，只能從門口懸掛的題辭判斷。請問哪一間才是好友的婚宴場地？</div>
+  <div class="card-body" id="body-q13">
+    <div class="options" id="opts-q13">
+<div class="option" data-letter="A">（Ａ）松鶴延齡</div>
+<div class="option" data-letter="B">（Ｂ）百年好合</div>
+<div class="option" data-letter="C">（Ｃ）大展鴻圖</div>
+<div class="option" data-letter="D">（Ｄ）美輪美奐</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q13', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q13" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀壽誕(Ｃ)賀開業(Ｄ)賀新居落成
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q32" onclick="toggleCard('q32')">
+  <div class="card-header">
+    <span class="q-num">第 32 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列詞語，何者不是當作祝壽辭？</div>
+  <div class="card-body" id="body-q32">
+    <div class="options" id="opts-q32">
+<div class="option" data-letter="A">（Ａ）多福多壽</div>
+<div class="option" data-letter="B">（Ｂ）松柏同春</div>
+<div class="option" data-letter="C">（Ｃ）北斗星沉</div>
+<div class="option" data-letter="D">（Ｄ）春滿瑤池</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q32', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q32" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)祝頌人幸福長壽的吉祥話(Ｂ)形容如松柏般長春不凋。用於一般祝壽或夫妻雙壽的祝壽題辭(Ｃ)哀輓男性喪者的輓辭，特別用於影響社會國家的人士(Ｄ)用於祝賀女性壽誕者的祝壽賀辭
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q50" onclick="toggleCard('q50')">
+  <div class="card-header">
+    <span class="q-num">第 50 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">(甲)椿萱並茂(乙)彩鳳新雛(丙)喜得寧馨(丁)齒德俱尊(戊)萬壽無疆(己)熊夢徵祥(庚)天賜石麟(辛)輝增彩帨(壬)蟠桃獻壽(癸)南極星輝。以上慶賀的題辭，分別是祝壽誕及賀生育，何組分類完全正確？</div>
+  <div class="card-body" id="body-q50">
+    <div class="options" id="opts-q50">
+<div class="option" data-letter="A">（Ａ）祝壽：甲乙丙戊己／賀生：丁庚辛壬癸</div>
+<div class="option" data-letter="B">（Ｂ）祝壽：乙丙戊辛癸／賀生：甲丁己庚壬</div>
+<div class="option" data-letter="C">（Ｃ）祝壽：丙丁／賀生：甲乙</div>
+<div class="option" data-letter="D">（Ｄ）祝壽：甲丁戊壬癸／賀生：乙丙己庚辛</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q50', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q50" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (甲)賀雙壽(乙)(辛)賀生女(丙)賀生子(丁)(癸)賀男壽(戊)賀壽(己)(庚)賀生男(壬)賀女壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q51" onclick="toggleCard('q51')">
+  <div class="card-header">
+    <span class="q-num">第 51 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">宋小萬為慶祝父親的生日，舉辦了一場餐會，邀請親朋好友參加。餐會到尾聲時，小萬從房間裡拿出一塊匾額要送給父親。根據情境判斷，匾額上會寫著下列何句？</div>
+  <div class="card-body" id="body-q51">
+    <div class="options" id="opts-q51">
+<div class="option" data-letter="A">（Ａ）瑤池春永</div>
+<div class="option" data-letter="B">（Ｂ）樹茂椿庭</div>
+<div class="option" data-letter="C">（Ｃ）德業長昭</div>
+<div class="option" data-letter="D">（Ｄ）桃夭及時</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q51', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q51" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀女壽(Ｃ)悼女喪(Ｄ)賀嫁女。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q54" onclick="toggleCard('q54')">
+  <div class="card-header">
+    <span class="q-num">第 54 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">2017年韓國巨星Rain跟金泰希要結婚了！請問祝賀他們結婚的封套上，祝福的話不宜寫下列何者？</div>
+  <div class="card-body" id="body-q54">
+    <div class="options" id="opts-q54">
+<div class="option" data-letter="A">（Ａ）永浴愛河</div>
+<div class="option" data-letter="B">（Ｂ）琴瑟和鳴</div>
+<div class="option" data-letter="C">（Ｃ）珠聯璧合</div>
+<div class="option" data-letter="D">（Ｄ）松鶴延齡</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q54', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q54" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ｄ)祝壽語
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q57" onclick="toggleCard('q57')">
+  <div class="card-header">
+    <span class="q-num">第 57 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">花輪要參加友藏爺爺的壽宴，到了飯店才發現自己忘了帶請帖，而梅、蘭、竹、菊四廳都有筵席。由各廳門前懸掛的題辭判斷，下列何者才是友藏爺爺設宴的場地？</div>
+  <div class="card-body" id="body-q57">
+    <div class="options" id="opts-q57">
+<div class="option" data-letter="A">（Ａ）蘭廳──明珠入掌</div>
+<div class="option" data-letter="B">（Ｂ）菊廳──瑤池春永</div>
+<div class="option" data-letter="C">（Ｃ）竹廳──南極騰輝</div>
+<div class="option" data-letter="D">（Ｄ）梅廳──文定吉祥</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q57', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q57" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀生女(Ｂ)賀女壽(Ｃ)賀男壽(Ｄ)賀訂婚</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q59" onclick="toggleCard('q59')">
+  <div class="card-header">
+    <span class="q-num">第 59 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列慶賀類題辭中，何者使用的情境相同？</div>
+  <div class="card-body" id="body-q59">
+    <div class="options" id="opts-q59">
+<div class="option" data-letter="A">（Ａ）百年好合／添丁之喜</div>
+<div class="option" data-letter="B">（Ｂ）瑤池春永／桃夭及時</div>
+<div class="option" data-letter="C">（Ｃ）南極騰輝／樹茂椿庭</div>
+<div class="option" data-letter="D">（Ｄ）文定之喜／松鶴延齡</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q59', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q59" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)皆用於男壽。(Ａ)結婚／生男(Ｂ)女壽／嫁女(Ｄ)訂婚／賀壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q64" onclick="toggleCard('q64')">
+  <div class="card-header">
+    <span class="q-num">第 64 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列慶賀類題辭中，何者使用的情境相同？</div>
+  <div class="card-body" id="body-q64">
+    <div class="options" id="opts-q64">
+<div class="option" data-letter="A">（Ａ）百年好合／添丁之喜</div>
+<div class="option" data-letter="B">（Ｂ）瑤池春永／桃夭及時</div>
+<div class="option" data-letter="C">（Ｃ）南極騰輝／樹茂椿庭</div>
+<div class="option" data-letter="D">（Ｄ）文定之喜／松鶴延齡</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q64', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q64" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)皆用於男壽。(Ａ)結婚／生男(Ｂ)女壽／嫁女(Ｄ)訂婚／賀壽
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-哀輓題辭">
+  <h2 class="cat-title">🕯️ 哀輓題辭 <span class="count">(9 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q3" onclick="toggleCard('q3')">
+  <div class="card-header">
+    <span class="q-num">第 3 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">曉諭的爺爺過世，身為曉諭莫逆之交的阿富想贈送輓聯，下列何者最適切？</div>
+  <div class="card-body" id="body-q3">
+    <div class="options" id="opts-q3">
+<div class="option" data-letter="A">（Ａ）駕返瑤池</div>
+<div class="option" data-letter="B">（Ｂ）響絕牙琴</div>
+<div class="option" data-letter="C">（Ｃ）德業長昭</div>
+<div class="option" data-letter="D">（Ｄ）高山安仰</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q3', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q3" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)哀女喪(Ｂ)哀朋友(Ｄ)哀師長
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q8" onclick="toggleCard('q8')">
+  <div class="card-header">
+    <span class="q-num">第 8 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">李老師最近因病逝世，在他的牆上掛了不少匾額，其中有一塊是教師節時，畢業學生感念老師多年教誨而贈送的。依你判斷是下列哪一個題辭？</div>
+  <div class="card-body" id="body-q8">
+    <div class="options" id="opts-q8">
+<div class="option" data-letter="A">（Ａ）音容宛在</div>
+<div class="option" data-letter="B">（Ｂ）春風化雨</div>
+<div class="option" data-letter="C">（Ｃ）桃李興悲</div>
+<div class="option" data-letter="D">（Ｄ）鵬程萬里</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q8', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q8" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)哀輓男女(Ｃ)哀輓師長(Ｄ)賀畢業
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q19" onclick="toggleCard('q19')">
+  <div class="card-header">
+    <span class="q-num">第 19 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列題辭的對象搭配何者有誤？</div>
+  <div class="card-body" id="body-q19">
+    <div class="options" id="opts-q19">
+<div class="option" data-letter="A">（Ａ）駕鶴西歸──悼喪禮</div>
+<div class="option" data-letter="B">（Ｂ）弄瓦徵祥──賀生女</div>
+<div class="option" data-letter="C">（Ｃ）春風化雨──頌醫生</div>
+<div class="option" data-letter="D">（Ｄ）琴瑟和鳴──賀結婚</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q19', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q19" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)頌老師
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q22" onclick="toggleCard('q22')">
+  <div class="card-header">
+    <span class="q-num">第 22 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小芳隨母親參加她朋友的告別式，發現喪幛上的題辭為「師表長存」，請問小芳母親的朋友生前可能從事什麼職業？</div>
+  <div class="card-body" id="body-q22">
+    <div class="options" id="opts-q22">
+<div class="option" data-letter="A">（Ａ）宗教家</div>
+<div class="option" data-letter="B">（Ｂ）音樂家</div>
+<div class="option" data-letter="C">（Ｃ）教育家</div>
+<div class="option" data-letter="D">（Ｄ）政治家</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q22', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q22" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q30" onclick="toggleCard('q30')">
+  <div class="card-header">
+    <span class="q-num">第 30 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">友人剛上高中的兒子在日本地震中不幸罹難，如果要送花圈表示哀悼，下列哪一題辭適用？</div>
+  <div class="card-body" id="body-q30">
+    <div class="options" id="opts-q30">
+<div class="option" data-letter="A">（Ａ）</div>
+<div class="option" data-letter="B">（Ｂ）</div>
+<div class="option" data-letter="C">（Ｃ）</div>
+<div class="option" data-letter="D">（Ｄ）</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q30', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q30" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)輓師長(Ｃ)女喪(Ｄ)老年男喪
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q37" onclick="toggleCard('q37')">
+  <div class="card-header">
+    <span class="q-num">第 37 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">紅配綠花店接到一筆訂單，要送一對花圈到某活動場地，花圈上的題辭為：「生花妙筆」，結果店員送到現場，發現那裡有好幾種活動正在舉行，請你依據花圈上的題辭判斷，應是屬於下列何種活動？</div>
+  <div class="card-body" id="body-q37">
+    <div class="options" id="opts-q37">
+<div class="option" data-letter="A">（Ａ）阿密特簽名會</div>
+<div class="option" data-letter="B">（Ｂ）香蕉哥哥見面會</div>
+<div class="option" data-letter="C">（Ｃ）侯文詠新書發表會</div>
+<div class="option" data-letter="D">（Ｄ）１１１人力公司人才招募說明會</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q37', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q37" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q38" onclick="toggleCard('q38')">
+  <div class="card-header">
+    <span class="q-num">第 38 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">假設朋友的爺爺去世，你打算送一對花圈表示哀悼，下列哪一項題辭適用？</div>
+  <div class="card-body" id="body-q38">
+    <div class="options" id="opts-q38">
+<div class="option" data-letter="A">（Ａ）高山空仰</div>
+<div class="option" data-letter="B">（Ｂ）淑德常昭</div>
+<div class="option" data-letter="C">（Ｃ）彤管流芳</div>
+<div class="option" data-letter="D">（Ｄ）老成凋謝</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q38', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q38" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)師長(Ｂ)(Ｃ)女性
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q68" onclick="toggleCard('q68')">
+  <div class="card-header">
+    <span class="q-num">第 68 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小汪和家人參加喪禮時，注意到輓聯眾多，有「哲人其萎」、「音容宛在」、「桃李興悲」、「響絕牙琴」等，請問往生者的身分最有可能是以下何者？</div>
+  <div class="card-body" id="body-q68">
+    <div class="options" id="opts-q68">
+<div class="option" data-letter="A">（Ａ）女立委</div>
+<div class="option" data-letter="B">（Ｂ）樂器行老闆</div>
+<div class="option" data-letter="C">（Ｃ）男老師</div>
+<div class="option" data-letter="D">（Ｄ）書法大家</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q68', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q68" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)「哲人其萎」用於男喪、「音容宛在」男女喪通用、「桃李興悲」用於師長喪、「響絕牙琴」用於朋友喪，綜合以上資訊，可知往生者為一位男老師
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q69" onclick="toggleCard('q69')">
+  <div class="card-header">
+    <span class="q-num">第 69 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小汪和家人參加喪禮時，注意到輓聯眾多，有「哲人其萎」、「音容宛在」、「桃李興悲」、「響絕牙琴」等，請問往生者的身分最有可能是以下何者？</div>
+  <div class="card-body" id="body-q69">
+    <div class="options" id="opts-q69">
+<div class="option" data-letter="A">（Ａ）女立委</div>
+<div class="option" data-letter="B">（Ｂ）樂器行老闆</div>
+<div class="option" data-letter="C">（Ｃ）男老師</div>
+<div class="option" data-letter="D">（Ｄ）書法大家</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q69', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q69" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)「哲人其萎」用於男喪、「音容宛在」男女喪通用、「桃李興悲」用於師長喪、「響絕牙琴」用於朋友喪，綜合以上資訊，可知往生者為一位男老師
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-生育題辭">
+  <h2 class="cat-title">👶 生育題辭 <span class="count">(3 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q25" onclick="toggleCard('q25')">
+  <div class="card-header">
+    <span class="q-num">第 25 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">「弄璋之喜」只限用在男生祝賀詞，下列何者也只能用於男生？</div>
+  <div class="card-body" id="body-q25">
+    <div class="options" id="opts-q25">
+<div class="option" data-letter="A">（Ａ）弄瓦徵祥</div>
+<div class="option" data-letter="B">（Ｂ）喜獲麟兒</div>
+<div class="option" data-letter="C">（Ｃ）明珠入掌</div>
+<div class="option" data-letter="D">（Ｄ）金萱不老</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q25', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q25" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)(Ｃ)賀生女(Ｄ)賀女壽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q35" onclick="toggleCard('q35')">
+  <div class="card-header">
+    <span class="q-num">第 35 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">韓新鎮的周醫師當選立法委員後，娶得總統的千金為妻，一年後生得一子。此時好友泰希送給他的賀詞應題什麼？</div>
+  <div class="card-body" id="body-q35">
+    <div class="options" id="opts-q35">
+<div class="option" data-letter="A">（Ａ）造福桑梓</div>
+<div class="option" data-letter="B">（Ｂ）杏林之光</div>
+<div class="option" data-letter="C">（Ｃ）弄璋之喜</div>
+<div class="option" data-letter="D">（Ｄ）鳳凰于飛</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q35', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q35" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀當選(Ｂ)賀醫院開業(Ｄ)賀結婚
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q45" onclick="toggleCard('q45')">
+  <div class="card-header">
+    <span class="q-num">第 45 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">曉溪包了一個紅包，上面題有「瓜瓞綿綿」，請問這個題辭，和下列哪一個選項的祝賀對象相同？</div>
+  <div class="card-body" id="body-q45">
+    <div class="options" id="opts-q45">
+<div class="option" data-letter="A">（Ａ）李下瓜田</div>
+<div class="option" data-letter="B">（Ｂ）匏瓜空懸</div>
+<div class="option" data-letter="C">（Ｃ）浮瓜沉李</div>
+<div class="option" data-letter="D">（Ｄ）子孫繁昌</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q45', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q45" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 題幹與(Ｄ)祝頌子孫繁衍昌盛，(Ａ)比喻容易引起懷疑的場合(Ｂ)比喻有才能的人卻不為世所用(Ｃ)比喻夏日消暑的樂事
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-比賽題辭">
+  <h2 class="cat-title">🏆 比賽題辭 <span class="count">(8 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q4" onclick="toggleCard('q4')">
+  <div class="card-header">
+    <span class="q-num">第 4 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列各句「　」中的題辭，何者使用恰當？</div>
+  <div class="card-body" id="body-q4">
+    <div class="options" id="opts-q4">
+<div class="option" data-letter="A">（Ａ）賀演講比賽優勝用「辯才無礙」</div>
+<div class="option" data-letter="B">（Ｂ）賀民意代表當選用「松柏長青」</div>
+<div class="option" data-letter="C">（Ｃ）賀友人搬家用「近悅遠來」</div>
+<div class="option" data-letter="D">（Ｄ）賀醫院開業用「大業永昌」</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q4', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q4" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)「松柏長青」是賀男女壽誕，應改為「眾望所歸」(Ｃ)「近悅遠來」賀旅館等開業，應改為「喬遷之喜」(Ｄ)「大業永昌」賀工廠開業，應改為「妙手回春」
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q6" onclick="toggleCard('q6')">
+  <div class="card-header">
+    <span class="q-num">第 6 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列各項比賽優勝的獎牌題辭，何者搭配最恰當？</div>
+  <div class="card-body" id="body-q6">
+    <div class="options" id="opts-q6">
+<div class="option" data-letter="A">（Ａ）演說比賽：舌粲蓮花</div>
+<div class="option" data-letter="B">（Ｂ）作文比賽：筆走龍蛇</div>
+<div class="option" data-letter="C">（Ｃ）書法比賽：玉潤珠圓</div>
+<div class="option" data-letter="D">（Ｄ）歌唱比賽：含英咀華</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q6', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q6" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)「筆走龍蛇」適合用在書法比賽，應改為「含英咀華」(Ｃ)「玉潤珠圓」適合用在歌唱比賽，應改為「筆走龍蛇」(Ｄ)「含英咀華」適合用在作文比賽，應改為「玉潤珠圓」
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q26" onclick="toggleCard('q26')">
+  <div class="card-header">
+    <span class="q-num">第 26 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">相傳戰國時的韓國有一名女子韓娥，她的歌藝很好。有一次，她前往齊國，在抵達齊國庸門時，旅費卻已用盡，於是她便賣唱以賺取食物。即使在她離去之後，齊國的人們依舊覺得她的動人歌聲還繚繞於城門的梁柱，久久未散。後這則故事就延伸出□□□□，可用來慶賀他人歌唱比賽優勝。請問：□□□□應為下列何者？</div>
+  <div class="card-body" id="body-q26">
+    <div class="options" id="opts-q26">
+<div class="option" data-letter="A">（Ａ）樂育美才</div>
+<div class="option" data-letter="B">（Ｂ）新鶯出谷</div>
+<div class="option" data-letter="C">（Ｃ）餘音繞梁</div>
+<div class="option" data-letter="D">（Ｄ）含英咀華</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q26', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q26" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)指教育單位培育優秀人才，可用於校慶活動(Ｂ)比喻人的歌聲，悅耳動聽，可用於音樂比賽(Ｄ)品味文章的要旨，咀嚼辭藻的華美，可用於作文比賽。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q41" onclick="toggleCard('q41')">
+  <div class="card-header">
+    <span class="q-num">第 41 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">今天表弟柱赫抱了一座冠軍獎盃回家，獎盃上題有「矯手游龍」一詞，請問柱赫是下列哪一項比賽的冠軍？</div>
+  <div class="card-body" id="body-q41">
+    <div class="options" id="opts-q41">
+<div class="option" data-letter="A">（Ａ）射箭比賽</div>
+<div class="option" data-letter="B">（Ｂ）田徑比賽</div>
+<div class="option" data-letter="C">（Ｃ）網球比賽</div>
+<div class="option" data-letter="D">（Ｄ）游泳比賽</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q41', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q41" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q48" onclick="toggleCard('q48')">
+  <div class="card-header">
+    <span class="q-num">第 48 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列各項比賽優勝的獎牌題辭，何者搭配最恰當？</div>
+  <div class="card-body" id="body-q48">
+    <div class="options" id="opts-q48">
+<div class="option" data-letter="A">（Ａ）Ａ</div>
+<div class="option" data-letter="B">（Ｂ）Ｂ</div>
+<div class="option" data-letter="C">（Ｃ）Ｃ</div>
+<div class="option" data-letter="D">（Ｄ）Ｄ</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q48', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q48" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ｃ)鐵畫銀鉤：形容筆畫如鐵般的剛勁，如銀般的柔媚，故適用於書法比賽。(Ａ)「妙筆生花」比喻文筆美妙，寫作能力極佳。演說比賽宜用「辯才無礙」(Ｂ)「新鶯出谷」比喻人的歌聲，宛轉清脆，悅耳動聽。作文比賽宜用「妙筆生花」(Ｄ)「口若懸河」指說起話來像瀑布一樣滔滔不絕，比喻能言善辯。歌唱比賽宜用「新鶯出谷」。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q56" onclick="toggleCard('q56')">
+  <div class="card-header">
+    <span class="q-num">第 56 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">怪獸在音樂比賽中奪冠，阿信想要送一塊匾額給他，試問下列何者不適合作為送禮選擇？</div>
+  <div class="card-body" id="body-q56">
+    <div class="options" id="opts-q56">
+<div class="option" data-letter="A">（Ａ）黃鶯出谷</div>
+<div class="option" data-letter="B">（Ｂ）口若懸河</div>
+<div class="option" data-letter="C">（Ｃ）玉潤珠圓</div>
+<div class="option" data-letter="D">（Ｄ）餘音繞梁</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q56', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q56" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q62" onclick="toggleCard('q62')">
+  <div class="card-header">
+    <span class="q-num">第 62 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列情境搭配使用的題詞何者最恰當？</div>
+  <div class="card-body" id="body-q62">
+    <div class="options" id="opts-q62">
+<div class="option" data-letter="A">（Ａ）賀書法比賽得獎：筆走龍蛇</div>
+<div class="option" data-letter="B">（Ｂ）賀搬家：餘音繞梁</div>
+<div class="option" data-letter="C">（Ｃ）賀醫院開業：客似雲來</div>
+<div class="option" data-letter="D">（Ｄ）賀畢業：痛失知音</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q62', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q62" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)餘音繞梁用於音樂比賽(Ｃ)客似雲來適用於商店、飯店、旅店，但祝福來醫院的人很多不太合適(Ｄ)痛失知音用於朋友喪
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q71" onclick="toggleCard('q71')">
+  <div class="card-header">
+    <span class="q-num">第 71 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">下列情境搭配使用的題詞何者最恰當？</div>
+  <div class="card-body" id="body-q71">
+    <div class="options" id="opts-q71">
+<div class="option" data-letter="A">（Ａ）賀書法比賽得獎：筆走龍蛇</div>
+<div class="option" data-letter="B">（Ｂ）賀搬家：餘音繞梁</div>
+<div class="option" data-letter="C">（Ｃ）賀醫院開業：客似雲來</div>
+<div class="option" data-letter="D">（Ｄ）賀畢業：痛失知音</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q71', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q71" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)餘音繞梁用於音樂比賽(Ｃ)客似雲來適用於商店、飯店、旅店，但祝福來醫院的人很多不太合適(Ｄ)痛失知音用於朋友喪
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-開業題辭">
+  <h2 class="cat-title">🏪 開業題辭 <span class="count">(6 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q5" onclick="toggleCard('q5')">
+  <div class="card-header">
+    <span class="q-num">第 5 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小芸參加表哥的新診所開幕典禮，想在花籃上題上祝賀的話語。下列哪一題辭最適合？</div>
+  <div class="card-body" id="body-q5">
+    <div class="options" id="opts-q5">
+<div class="option" data-letter="A">（Ａ）仁心仁術</div>
+<div class="option" data-letter="B">（Ｂ）堂構維新</div>
+<div class="option" data-letter="C">（Ｃ）開物成務</div>
+<div class="option" data-letter="D">（Ｄ）金匱石室</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q5', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q5" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)賀新居落成(Ｃ)賀工廠開業(Ｄ)賀書店開業
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q10" onclick="toggleCard('q10')">
+  <div class="card-header">
+    <span class="q-num">第 10 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">王同學的爸爸剛開了一家小餐館，老師想送上一幅祝賀的題辭。下列哪一句最適合？</div>
+  <div class="card-body" id="body-q10">
+    <div class="options" id="opts-q10">
+<div class="option" data-letter="A">（Ａ）福壽全歸</div>
+<div class="option" data-letter="B">（Ｂ）鶯遷喬木</div>
+<div class="option" data-letter="C">（Ｃ）近悅遠來</div>
+<div class="option" data-letter="D">（Ｄ）松柏長青</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q10', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q10" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)哀輓男女(Ｂ)賀搬家(Ｄ)賀壽誕
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q12" onclick="toggleCard('q12')">
+  <div class="card-header">
+    <span class="q-num">第 12 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">畢業二十年的高中同學相約聚會，大家聊起彼此的近況。阿明：「聽說阿惠的店舖開張時，貴客盈門、近悅遠來，真是生意興隆啊！」阿惠：「哪裡哪裡，上個月阿正鶯遷喬木，我還送了『里仁為美』的花籃呢！」阿正：「哈哈，謝啦！聽說阿芬前陣子當選鄉代表，大家都說真是『桑梓之光』呢！」阿芬：「別客氣，阿明仁心仁術，等你開業，我一定也送你一幅『杏林之光』的匾額！」根據這段文字，下列敘述何者最恰當？</div>
+  <div class="card-body" id="body-q12">
+    <div class="options" id="opts-q12">
+<div class="option" data-letter="A">（Ａ）阿惠開設診所</div>
+<div class="option" data-letter="B">（Ｂ）阿正文定之喜</div>
+<div class="option" data-letter="C">（Ｃ）阿芬為民喉舌</div>
+<div class="option" data-letter="D">（Ｄ）阿明應為教師</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q12', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q12" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)阿惠開設飯店旅館(Ｂ)阿正剛搬新家(Ｄ)阿明應為醫師
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q29" onclick="toggleCard('q29')">
+  <div class="card-header">
+    <span class="q-num">第 29 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">請問上列匾額缺空處應填入下列何者較適當？</div>
+  <div class="card-body" id="body-q29">
+    <div class="options" id="opts-q29">
+<div class="option" data-letter="A">（Ａ）報社</div>
+<div class="option" data-letter="B">（Ｂ）診所</div>
+<div class="option" data-letter="C">（Ｃ）書局</div>
+<div class="option" data-letter="D">（Ｄ）銀行</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q29', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q29" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q40" onclick="toggleCard('q40')">
+  <div class="card-header">
+    <span class="q-num">第 40 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">阿燦的新店開張，他的好友用毛筆在紙上題了「近悅遠來」四個字送給他。依此句題辭，阿燦開的是哪一種店？</div>
+  <div class="card-body" id="body-q40">
+    <div class="options" id="opts-q40">
+<div class="option" data-letter="A">（Ａ）圖書館</div>
+<div class="option" data-letter="B">（Ｂ）醫院</div>
+<div class="option" data-letter="C">（Ｃ）學校</div>
+<div class="option" data-letter="D">（Ｄ）民宿</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q40', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q40" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 「近悅遠來」通常用於「旅館飯店」的慶賀類，故選(Ｄ)
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q46" onclick="toggleCard('q46')">
+  <div class="card-header">
+    <span class="q-num">第 46 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">某學者舉辦學術論文發表會，友人致贈花籃，卡片上的題辭最適合填入下列何者？</div>
+  <div class="card-body" id="body-q46">
+    <div class="options" id="opts-q46">
+<div class="option" data-letter="A">（Ａ）聲重士林</div>
+<div class="option" data-letter="B">（Ｂ）商賈輻輳</div>
+<div class="option" data-letter="C">（Ｃ）師表千古</div>
+<div class="option" data-letter="D">（Ｄ）里仁為美</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q46', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q46" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (A)給學術界(B)給商業人士(C)給教育界的喪禮題辭(D)給遷居者。
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-搬遷題辭">
+  <h2 class="cat-title">🏠 搬遷題辭 <span class="count">(4 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q28" onclick="toggleCard('q28')">
+  <div class="card-header">
+    <span class="q-num">第 28 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小林的朋友搬新家，他想送匾額祝賀他，他應選下列哪一幅才不會失禮？</div>
+  <div class="card-body" id="body-q28">
+    <div class="options" id="opts-q28">
+<div class="option" data-letter="A">（Ａ）鯉躍龍門</div>
+<div class="option" data-letter="B">（Ｂ）汗牛充棟</div>
+<div class="option" data-letter="C">（Ｃ）美輪美奐</div>
+<div class="option" data-letter="D">（Ｄ）返璞歸真</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q28', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q28" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q39" onclick="toggleCard('q39')">
+  <div class="card-header">
+    <span class="q-num">第 39 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">紅樓夢裡，賈政為了迎接女兒元妃回娘家，特別興建了大觀園，並命賈寶玉為園中各樓、各景取名，姊妹們知道了，便提供下列成語：「古色古香、洞天福地、飛簷走壁、雕梁畫棟、表裡山河、錦繡河山、美輪美奐、花街柳巷」請問不適用的有幾個？</div>
+  <div class="card-body" id="body-q39">
+    <div class="options" id="opts-q39">
+<div class="option" data-letter="A">（Ａ）三個</div>
+<div class="option" data-letter="B">（Ｂ）四個</div>
+<div class="option" data-letter="C">（Ｃ）五個</div>
+<div class="option" data-letter="D">（Ｄ）六個</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q39', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q39" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 飛簷走壁：行動敏捷，武藝高超／表裡山河：有山、河作為國土的屏障，可以固守而安居／錦繡河山：形容國土像精美的絲織品一樣美好／花街柳巷：風月場所叢聚之處的統稱。以上四個成語不適合描述大觀園
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q44" onclick="toggleCard('q44')">
+  <div class="card-header">
+    <span class="q-num">第 44 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">小民搬家，阿玉欲送禮金表達祝賀之意。下列題辭，何者最適合寫在賀儀封套上？</div>
+  <div class="card-body" id="body-q44">
+    <div class="options" id="opts-q44">
+<div class="option" data-letter="A">（Ａ）乳燕歸巢</div>
+<div class="option" data-letter="B">（Ｂ）造福桑梓</div>
+<div class="option" data-letter="C">（Ｃ）宜室宜家</div>
+<div class="option" data-letter="D">（Ｄ）喬遷之喜</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q44', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q44" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)賀音樂比賽(Ｂ)賀當選(Ｃ)賀嫁女(Ｄ)賀搬家，故為答案。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q47" onclick="toggleCard('q47')">
+  <div class="card-header">
+    <span class="q-num">第 47 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">正所謂「近朱者赤，近墨者黑」，孟母歷經三遷，終於找到好環境。梁惠王要恭喜剛搬好家的她，應該送上什麼賀詞最好？</div>
+  <div class="card-body" id="body-q47">
+    <div class="options" id="opts-q47">
+<div class="option" data-letter="A">（Ａ）德必有鄰</div>
+<div class="option" data-letter="B">（Ｂ）如解倒懸</div>
+<div class="option" data-letter="C">（Ｃ）士必弘毅</div>
+<div class="option" data-letter="D">（Ｄ）白首成約</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q47', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q47" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)賀慈善事業(Ｃ)賀畢業(Ｄ)賀訂婚
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-師生_畢業題辭">
+  <h2 class="cat-title">🎓 師生／畢業題辭 <span class="count">(5 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q1" onclick="toggleCard('q1')">
+  <div class="card-header">
+    <span class="q-num">第 1 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">林老師的新書文學與人生出版，親友紛紛送上祝賀。怡文送了一方題辭「含英咀華」的匾額；建宏說：「若改成『筆走龍蛇』更能展現氣勢！」佩芸則說：「我覺得『前程似錦』也很適合啊！」最後雅筑笑著說：「不如用『鵬程萬里』吧，聽起來最吉利！」根據這段對話，誰的做法或說法最恰當？</div>
+  <div class="card-body" id="body-q1">
+    <div class="options" id="opts-q1">
+<div class="option" data-letter="A">（Ａ）建宏</div>
+<div class="option" data-letter="B">（Ｂ）怡文</div>
+<div class="option" data-letter="C">（Ｃ）雅筑</div>
+<div class="option" data-letter="D">（Ｄ）佩芸</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q1', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q1" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 「筆走龍蛇」適合書法比賽，「前程似錦」、「鵬程萬里」則多用於畢業場合，故選(Ｂ)
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q18" onclick="toggleCard('q18')">
+  <div class="card-header">
+    <span class="q-num">第 18 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">希徹的國中學長即將畢業，他請希徹在畢業紀念冊上題辭，請問下列何者不可能出現在畢業紀念冊上？</div>
+  <div class="card-body" id="body-q18">
+    <div class="options" id="opts-q18">
+<div class="option" data-letter="A">（Ａ）高山仰止</div>
+<div class="option" data-letter="B">（Ｂ）更上層樓</div>
+<div class="option" data-letter="C">（Ｃ）友誼永固</div>
+<div class="option" data-letter="D">（Ｄ）滄海程寬</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q18', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q18" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ａ)崇高的德行，令人景仰。通常用於哀輓(Ｄ)形容未來的人生之途寬廣，用於畢業或臨別時的贈言題辭
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q31" onclick="toggleCard('q31')">
+  <div class="card-header">
+    <span class="q-num">第 31 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">恩妃想要送給即將畢業的學姊賀卡，而她可以用下列哪個詞語來祝福學姊？</div>
+  <div class="card-body" id="body-q31">
+    <div class="options" id="opts-q31">
+<div class="option" data-letter="A">（Ａ）百年樹人</div>
+<div class="option" data-letter="B">（Ｂ）龍飛鳳舞</div>
+<div class="option" data-letter="C">（Ｃ）更上層樓</div>
+<div class="option" data-letter="D">（Ｄ）賓至如歸</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q31', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q31" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)謝師恩(Ｂ)賀書法比賽勝利(Ｄ)賀商店開業
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q43" onclick="toggleCard('q43')">
+  <div class="card-header">
+    <span class="q-num">第 43 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">玉婷買了花和卡片，準備在畢業典禮前送給老師，感謝老師的教導。下列題辭，何者最適合寫在卡片上？</div>
+  <div class="card-body" id="body-q43">
+    <div class="options" id="opts-q43">
+<div class="option" data-letter="A">（Ａ）春風化雨</div>
+<div class="option" data-letter="B">（Ｂ）里仁為美</div>
+<div class="option" data-letter="C">（Ｃ）妙手回春</div>
+<div class="option" data-letter="D">（Ｄ）松柏長青</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q43', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q43" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (A)比喻師長和藹親切的教育。適用對象為師長，故為答案(B)選擇住處應挑有仁風的地方。適用於賀搬家(C)指醫師的醫術高明，能把垂危的病人治癒。適用對象為醫師(D)比喻壽如松柏之長青不衰。適用於賀長壽。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q55" onclick="toggleCard('q55')">
+  <div class="card-header">
+    <span class="q-num">第 55 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">如果你想要在教師節的卡片上寫下感謝老師們的成語，請問下列何者不妥？</div>
+  <div class="card-body" id="body-q55">
+    <div class="options" id="opts-q55">
+<div class="option" data-letter="A">（Ａ）春風化雨</div>
+<div class="option" data-letter="B">（Ｂ）杏林春暖</div>
+<div class="option" data-letter="C">（Ｃ）桃李滿門</div>
+<div class="option" data-letter="D">（Ｄ）作育英才</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q55', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q55" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)杏壇：教育界；杏林：醫學界
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-柬帖知識">
+  <h2 class="cat-title">📜 柬帖知識 <span class="count">(8 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q2" onclick="toggleCard('q2')">
+  <div class="card-header">
+    <span class="q-num">第 2 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">上列這張請柬內容中，缺少了哪一個必要項目？</div>
+  <div class="card-body" id="body-q2">
+    <div class="options" id="opts-q2">
+<div class="option" data-letter="A">（Ａ）活動地點</div>
+<div class="option" data-letter="B">（Ｂ）柬帖事由</div>
+<div class="option" data-letter="C">（Ｃ）收帖人稱謂</div>
+<div class="option" data-letter="D">（Ｄ）發帖人具名</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q2', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q2" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)同學會(Ｃ)非必要項目(Ｄ)沈家怡
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q7" onclick="toggleCard('q7')">
+  <div class="card-header">
+    <span class="q-num">第 7 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">王阿姨收到一張宴會邀請卡，因太過匆忙，只注意到裡面寫著「餞行」。根據字義推測，這場宴會的目的是什麼？</div>
+  <div class="card-body" id="body-q7">
+    <div class="options" id="opts-q7">
+<div class="option" data-letter="A">（Ａ）送別即將出國的朋友</div>
+<div class="option" data-letter="B">（Ｂ）歡迎新同事加入公司</div>
+<div class="option" data-letter="C">（Ｃ）慶祝公司新部門成立</div>
+<div class="option" data-letter="D">（Ｄ）歡迎海外歸來的親戚</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q7', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q7" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 餞行，設酒食為人送行，故選(Ａ)最恰當
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q14" onclick="toggleCard('q14')">
+  <div class="card-header">
+    <span class="q-num">第 14 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">關於這則請柬，下列敘述何者正確？</div>
+  <div class="card-body" id="body-q14">
+    <div class="options" id="opts-q14">
+<div class="option" data-letter="A">（Ａ）此為訂婚請帖</div>
+<div class="option" data-letter="B">（Ｂ）李志明為新郎</div>
+<div class="option" data-letter="C">（Ｃ）缺少發帖人具名</div>
+<div class="option" data-letter="D">（Ｄ）可攜帶眷屬前往</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q14', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q14" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ａ)應為結婚請帖(Ｂ)為新娘父親(Ｃ)發帖人為李志明
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q15" onclick="toggleCard('q15')">
+  <div class="card-header">
+    <span class="q-num">第 15 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">根據以上喜帖內容，下列敘述何者正確？</div>
+  <div class="card-body" id="body-q15">
+    <div class="options" id="opts-q15">
+<div class="option" data-letter="A">（Ａ）新郎是李嘉誠先生</div>
+<div class="option" data-letter="B">（Ｂ）新娘是陳麗美小姐</div>
+<div class="option" data-letter="C">（Ｃ）喜宴設在吳天福的家中</div>
+<div class="option" data-letter="D">（Ｄ）祝賀的題辭可以用文定之喜</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q15', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q15" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)新郎是吳俊廷先生(Ｂ)新娘是李怡亭小姐(Ｄ)「文定之喜」用於訂婚
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q63" onclick="toggleCard('q63')">
+  <div class="card-header">
+    <span class="q-num">第 63 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">柬帖泛指人們交際應酬所用的正式書面通知，下列柬帖的種類與內容說明何者正確？</div>
+  <div class="card-body" id="body-q63">
+    <div class="options" id="opts-q63">
+<div class="option" data-letter="A">（Ａ）婚嫁柬帖：邀請親友參加婚禮或喜宴所用</div>
+<div class="option" data-letter="B">（Ｂ）慶賀柬帖：邀請親友參加喜慶活動所用，例如：餞行、洗塵</div>
+<div class="option" data-letter="C">（Ｃ）喪葬柬帖：為親友或社會各界向喪家或治喪者表達哀悼之意所用</div>
+<div class="option" data-letter="D">（Ｄ）一般應酬柬帖：邀請相關人士參加宴會所用的柬帖，如：告別式</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q63', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q63" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)(Ｂ)餞行、洗塵屬於一般應酬柬帖(Ｄ)告別式屬於喪葬柬帖
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q66" onclick="toggleCard('q66')">
+  <div class="card-header">
+    <span class="q-num">第 66 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">各種柬帖的形式及用語都有其固定的格式與措詞，下列何者是柬帖必要的內容？</div>
+  <div class="card-body" id="body-q66">
+    <div class="options" id="opts-q66">
+<div class="option" data-letter="A">（Ａ）起因、經過、結果</div>
+<div class="option" data-letter="B">（Ｂ）事由、時間、地點</div>
+<div class="option" data-letter="C">（Ｃ）收件人、寄件人、電話</div>
+<div class="option" data-letter="D">（Ｄ）封面、封底、目錄</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q66', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q66" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)事由：說明需要召集大家的原因。時間：說明活動時間。地點：說明活動地點
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q67" onclick="toggleCard('q67')">
+  <div class="card-header">
+    <span class="q-num">第 67 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">柬帖泛指人們交際應酬所用的正式書面通知，下列柬帖的種類與內容說明何者正確？</div>
+  <div class="card-body" id="body-q67">
+    <div class="options" id="opts-q67">
+<div class="option" data-letter="A">（Ａ）婚嫁柬帖：邀請親友參加婚禮或喜宴所用</div>
+<div class="option" data-letter="B">（Ｂ）慶賀柬帖：邀請親友參加喜慶活動所用，例如：餞行、洗塵</div>
+<div class="option" data-letter="C">（Ｃ）喪葬柬帖：為親友或社會各界向喪家或治喪者表達哀悼之意所用</div>
+<div class="option" data-letter="D">（Ｄ）一般應酬柬帖：邀請相關人士參加宴會所用的柬帖，如：告別式</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q67', 'Ｃ')">顯示答案</button>
+    <div class="answer-block" id="ans-q67" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｃ）</strong> </div>
+      <div class="explanation">💡 (Ａ)(Ｂ)餞行、洗塵屬於一般應酬柬帖(Ｄ)告別式屬於喪葬柬帖
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q74" onclick="toggleCard('q74')">
+  <div class="card-header">
+    <span class="q-num">第 74 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">各種柬帖的形式及用語都有其固定的格式與措詞，下列何者是柬帖必要的內容？</div>
+  <div class="card-body" id="body-q74">
+    <div class="options" id="opts-q74">
+<div class="option" data-letter="A">（Ａ）起因、經過、結果</div>
+<div class="option" data-letter="B">（Ｂ）事由、時間、地點</div>
+<div class="option" data-letter="C">（Ｃ）收件人、寄件人、電話</div>
+<div class="option" data-letter="D">（Ｄ）封面、封底、目錄</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q74', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q74" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)事由：說明需要召集大家的原因。時間：說明活動時間。地點：說明活動地點
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+<section class="category-section" id="cat-題辭概念">
+  <h2 class="cat-title">📖 題辭概念 <span class="count">(11 題)</span></h2>
+  <div class="cards-row">
+<div class="card" id="q16" onclick="toggleCard('q16')">
+  <div class="card-header">
+    <span class="q-num">第 16 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">有關題辭的說明，下列何者有誤？</div>
+  <div class="card-body" id="body-q16">
+    <div class="options" id="opts-q16">
+<div class="option" data-letter="A">（Ａ）有固定的格式，文字皆為四個字</div>
+<div class="option" data-letter="B">（Ｂ）贈送題辭時，要考量目的與對象</div>
+<div class="option" data-letter="C">（Ｃ）文字求典雅，不可過度標新立異</div>
+<div class="option" data-letter="D">（Ｄ）音節要諧調，讀起來流暢而通順</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q16', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q16" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ａ)無固定格式，字數並無限制，通常以四個字為主。
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q20" onclick="toggleCard('q20')">
+  <div class="card-header">
+    <span class="q-num">第 20 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">根據上面黃曆所載，此日最不可能看到何種題辭？</div>
+  <div class="card-body" id="body-q20">
+    <div class="options" id="opts-q20">
+<div class="option" data-letter="A">（Ａ）秦 晉之好</div>
+<div class="option" data-letter="B">（Ｂ）里仁為美</div>
+<div class="option" data-letter="C">（Ｃ）桃李興悲</div>
+<div class="option" data-letter="D">（Ｄ）近悅遠來</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q20', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q20" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 </div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q23" onclick="toggleCard('q23')">
+  <div class="card-header">
+    <span class="q-num">第 23 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">智媛參加完祭孔典禮後，便進入大成殿內參觀，抬頭看見許多歷代匾額，請問下列匾額，何者不可能出現在大成殿上？</div>
+  <div class="card-body" id="body-q23">
+    <div class="options" id="opts-q23">
+<div class="option" data-letter="A">（Ａ）至聖先師</div>
+<div class="option" data-letter="B">（Ｂ）絃歌不輟</div>
+<div class="option" data-letter="C">（Ｃ）道貫古今</div>
+<div class="option" data-letter="D">（Ｄ）萬世師表</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q23', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q23" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)校慶的題辭
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q33" onclick="toggleCard('q33')">
+  <div class="card-header">
+    <span class="q-num">第 33 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">「筆力萬鈞」之於「龍飛鳳舞」的關係，猶如「高山流水」和下列何者的關係？</div>
+  <div class="card-body" id="body-q33">
+    <div class="options" id="opts-q33">
+<div class="option" data-letter="A">（Ａ）白雪陽春</div>
+<div class="option" data-letter="B">（Ｂ）仁者樂山</div>
+<div class="option" data-letter="C">（Ｃ）口若懸河</div>
+<div class="option" data-letter="D">（Ｄ）允文允武</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q33', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q33" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 題幹「高山流水」與(Ａ)指音樂比賽；(Ｂ)登山(Ｃ)演講(Ｄ)運動比賽
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q49" onclick="toggleCard('q49')">
+  <div class="card-header">
+    <span class="q-num">第 49 題</span>
+    <span class="section-tag">基礎語文知識題</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">北宋丞相呂蒙正，少年時對社會貧富不均的現象很不滿，於春節時，眼見壁上空無一物，一氣之下，寫了一副春聯貼上，上聯是「二三四五」，下聯「六七八九」。你認為他要表達的是什麼？</div>
+  <div class="card-body" id="body-q49">
+    <div class="options" id="opts-q49">
+<div class="option" data-letter="A">（Ａ）聞一知十</div>
+<div class="option" data-letter="B">（Ｂ）忐忑不安</div>
+<div class="option" data-letter="C">（Ｃ）心裡有數</div>
+<div class="option" data-letter="D">（Ｄ）缺衣少食</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q49', 'Ｄ')">顯示答案</button>
+    <div class="answer-block" id="ans-q49" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｄ）</strong> </div>
+      <div class="explanation">💡 (Ｄ)諧音「缺一少十」
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q58" onclick="toggleCard('q58')">
+  <div class="card-header">
+    <span class="q-num">第 58 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">題辭的分類，依據內容的不同，大致上可分為三大類，其中慶賀類題辭用以表示祝賀，下列何者是適用的場合？</div>
+  <div class="card-body" id="body-q58">
+    <div class="options" id="opts-q58">
+<div class="option" data-letter="A">（Ａ）贈詩</div>
+<div class="option" data-letter="B">（Ｂ）開業</div>
+<div class="option" data-letter="C">（Ｃ）喪葬</div>
+<div class="option" data-letter="D">（Ｄ）頌恩</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q58', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q58" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)屬於應酬類 (Ｃ)屬於哀輓類(Ｄ)屬於應酬類
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q60" onclick="toggleCard('q60')">
+  <div class="card-header">
+    <span class="q-num">第 60 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">題辭的撰寫要領有三：一、選詞貼切，符合情境；二、用字典雅，不陳腐不特異；三、音節和諧，流暢為主。綜上所述，如果要在日月潭放置石刻題辭，下列何者最合適？</div>
+  <div class="card-body" id="body-q60">
+    <div class="options" id="opts-q60">
+<div class="option" data-letter="A">（Ａ）煙波萬頃</div>
+<div class="option" data-letter="B">（Ｂ）好大的湖</div>
+<div class="option" data-letter="C">（Ｃ）渺渺澹瀦</div>
+<div class="option" data-letter="D">（Ｄ）廣淼滾湧</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q60', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q60" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)用字太口語，不典雅(Ｃ)用字太特異艱澀難懂。渺：水面遼闊無際。澹：水波盪漾。瀦：水流停聚的地方(Ｄ)用字音節不和諧流暢
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q61" onclick="toggleCard('q61')">
+  <div class="card-header">
+    <span class="q-num">第 61 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">題辭的分類，依據內容的不同，大致上可分為三大類，其中慶賀類題辭用以表示祝賀，下列何者是適用的場合？</div>
+  <div class="card-body" id="body-q61">
+    <div class="options" id="opts-q61">
+<div class="option" data-letter="A">（Ａ）贈詩</div>
+<div class="option" data-letter="B">（Ｂ）開業</div>
+<div class="option" data-letter="C">（Ｃ）喪葬</div>
+<div class="option" data-letter="D">（Ｄ）頌恩</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q61', 'Ｂ')">顯示答案</button>
+    <div class="answer-block" id="ans-q61" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ｂ）</strong> </div>
+      <div class="explanation">💡 (Ａ)屬於應酬類 (Ｃ)屬於哀輓類(Ｄ)屬於應酬類
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q70" onclick="toggleCard('q70')">
+  <div class="card-header">
+    <span class="q-num">第 70 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">「題辭，是以精簡的文辭，來表達慶賀、頌揚、勉勵、警戒、紀念或哀悼的心意。可以寫在幛子、匾額、花圈、紀念冊、書本、錦旗、獎盃、禮金袋等物之上。題辭沒有固定的格式，通常是以四個字為主，多者不過是幾句話，少者甚至只有一個字。」關於此段文字書寫的資訊，下列何者正確？</div>
+  <div class="card-body" id="body-q70">
+    <div class="options" id="opts-q70">
+<div class="option" data-letter="A">（Ａ）「以精簡的文辭」說明題辭的形式</div>
+<div class="option" data-letter="B">（Ｂ）「來表達慶賀……的心意」說明題辭的載體</div>
+<div class="option" data-letter="C">（Ｃ）「可以寫在幛子……等物之上」說明題辭的功能</div>
+<div class="option" data-letter="D">（Ｄ）「以四個字為主，多者不過是幾句話，少者甚至只有一個字。」呼應「來表達警戒的心意。」</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q70', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q70" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)說明題辭的功能 (Ｃ) 說明題辭的載體載體：用來承載軟體的媒介(Ｄ)呼應「精簡的文辭」
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q72" onclick="toggleCard('q72')">
+  <div class="card-header">
+    <span class="q-num">第 72 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">「題辭，是以精簡的文辭，來表達慶賀、頌揚、勉勵、警戒、紀念或哀悼的心意。可以寫在幛子、匾額、花圈、紀念冊、書本、錦旗、獎盃、禮金袋等物之上。題辭沒有固定的格式，通常是以四個字為主，多者不過是幾句話，少者甚至只有一個字。」關於此段文字書寫的資訊，下列何者正確？</div>
+  <div class="card-body" id="body-q72">
+    <div class="options" id="opts-q72">
+<div class="option" data-letter="A">（Ａ）「以精簡的文辭」說明題辭的形式</div>
+<div class="option" data-letter="B">（Ｂ）「來表達慶賀……的心意」說明題辭的載體</div>
+<div class="option" data-letter="C">（Ｃ）「可以寫在幛子……等物之上」說明題辭的功能</div>
+<div class="option" data-letter="D">（Ｄ）「以四個字為主，多者不過是幾句話，少者甚至只有一個字。」呼應「來表達警戒的心意。」</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q72', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q72" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)說明題辭的功能 (Ｃ) 說明題辭的載體載體：用來承載軟體的媒介(Ｄ)呼應「精簡的文辭」
+</div>
+    </div>
+  </div>
+</div>
+<div class="card" id="q73" onclick="toggleCard('q73')">
+  <div class="card-header">
+    <span class="q-num">第 73 題</span>
+    <span class="section-tag">課文文意理解</span>
+    <span class="expand-icon">＋</span>
+  </div>
+  <div class="q-text">題辭的撰寫要領有三：一、選詞貼切，符合情境；二、用字典雅，不陳腐不特異；三、音節和諧，流暢為主。綜上所述，如果要在日月潭放置石刻題辭，下列何者最合適？</div>
+  <div class="card-body" id="body-q73">
+    <div class="options" id="opts-q73">
+<div class="option" data-letter="A">（Ａ）煙波萬頃</div>
+<div class="option" data-letter="B">（Ｂ）好大的湖</div>
+<div class="option" data-letter="C">（Ｃ）渺渺澹瀦</div>
+<div class="option" data-letter="D">（Ｄ）廣淼滾湧</div>
+    </div>
+    <button class="show-ans-btn" onclick="showAnswer(event, 'q73', 'Ａ')">顯示答案</button>
+    <div class="answer-block" id="ans-q73" style="display:none">
+      <div class="answer-line">正確答案：<strong>（Ａ）</strong> </div>
+      <div class="explanation">💡 (Ｂ)用字太口語，不典雅(Ｃ)用字太特異艱澀難懂。渺：水面遼闊無際。澹：水波盪漾。瀦：水流停聚的地方(Ｄ)用字音節不和諧流暢
+</div>
+    </div>
+  </div>
+</div>
+  </div>
+</section>
+
+</main>
+
+<footer>114 學年度國中國文 · 點擊題目展開 · 點擊「顯示答案」查看解析</footer>
+
+<script>
+function toggleCard(qid) {
+  const card = document.getElementById(qid);
+  card.classList.toggle('active');
+}
+
+function showAnswer(e, qid, correct) {
+  e.stopPropagation();
+  const ansBlock = document.getElementById('ans-' + qid);
+  const btn = e.target;
+  const optsDiv = document.getElementById('opts-' + qid);
+
+  ansBlock.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = '已顯示答案';
+
+  // 標記選項顏色
+  optsDiv.querySelectorAll('.option').forEach(opt => {
+    const letter = opt.getAttribute('data-letter');
+    if (letter === correct) {
+      opt.classList.add('correct');
+    } else {
+      opt.classList.add('wrong');
+    }
+  });
+}
+
+function scrollTo_(safeid) {
+  const el = document.getElementById('cat-' + safeid);
+  if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+</script>
+</body>
+</html>

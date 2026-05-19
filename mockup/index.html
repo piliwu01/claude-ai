@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>《木蘭傳》Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #eee;
+    font-family: 'Press Start 2P', monospace, sans-serif;
+    font-size: 12px;
+  }
+
+  /* Tab switcher */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px;
+    background: #0f0f1a;
+    border-bottom: 2px solid #e94560;
+  }
+  .tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 2px solid #444;
+    background: #222;
+    color: #aaa;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+  }
+  .tab.active {
+    background: #e94560;
+    color: #fff;
+    border-color: #e94560;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ===== TEACHER SCREEN ===== */
+  #teacher {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto 1fr auto;
+    height: calc(100vh - 52px);
+    gap: 0;
+  }
+
+  /* Header */
+  .game-header {
+    grid-column: 1 / -1;
+    background: #16213e;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #e94560;
+  }
+  .game-title {
+    font-size: 14px;
+    color: #e94560;
+    text-shadow: 2px 2px 0 #7b0f1f;
+  }
+  .stage-info {
+    font-size: 9px;
+    color: #f5a623;
+    text-align: center;
+  }
+  .stage-name {
+    font-size: 11px;
+    color: #4ecdc4;
+  }
+
+  /* Main arena */
+  .arena {
+    background: #0d1117;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Pixel background decoration */
+  .arena::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: repeating-linear-gradient(
+      90deg,
+      #1e3a1e 0px, #1e3a1e 32px,
+      #264d26 32px, #264d26 64px
+    );
+  }
+
+  /* Monster */
+  .monster-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+  }
+  .monster-name {
+    font-size: 10px;
+    color: #ff6b6b;
+    text-shadow: 1px 1px 0 #7b0f0f;
+  }
+  .monster-hp-bar {
+    width: 280px;
+    height: 20px;
+    background: #333;
+    border: 2px solid #666;
+    position: relative;
+  }
+  .monster-hp-fill {
+    width: 65%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff8800);
+    position: relative;
+  }
+  .monster-hp-fill::after {
+    content: 'HP  650 / 1000';
+    position: absolute;
+    right: -120px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 7px;
+    color: #ff8800;
+    white-space: nowrap;
+  }
+
+  /* Pixel monster sprite (CSS art) */
+  .monster-sprite {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    image-rendering: pixelated;
+  }
+  .monster-sprite canvas {
+    image-rendering: pixelated;
+    width: 120px;
+    height: 120px;
+  }
+
+  /* Hero */
+  .hero-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    z-index: 1;
+    width: 100%;
+    justify-content: center;
+    padding-bottom: 70px;
+  }
+  .hero-sprite {
+    width: 60px;
+    height: 60px;
+    image-rendering: pixelated;
+  }
+  .hero-sprite canvas {
+    image-rendering: pixelated;
+    width: 60px;
+    height: 60px;
+  }
+
+  /* Question box */
+  .question-box {
+    background: #0f3460;
+    border: 3px solid #4ecdc4;
+    padding: 16px 20px;
+    margin: 0 20px;
+    z-index: 1;
+    width: calc(100% - 40px);
+  }
+  .question-label {
+    font-size: 8px;
+    color: #4ecdc4;
+    margin-bottom: 8px;
+  }
+  .question-text {
+    font-size: 11px;
+    color: #fff;
+    line-height: 2;
+    font-family: '微軟正黑體', sans-serif;
+    font-weight: bold;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: #16213e;
+    border-left: 3px solid #0f3460;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* QR area */
+  .qr-section {
+    padding: 16px;
+    border-bottom: 2px solid #0f3460;
+    text-align: center;
+  }
+  .qr-label {
+    font-size: 7px;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+  .qr-box {
+    width: 100px;
+    height: 100px;
+    background: white;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    color: #333;
+    font-family: monospace;
+    padding: 4px;
+  }
+
+  /* Timer */
+  .timer-section {
+    padding: 12px 16px;
+    border-bottom: 2px solid #0f3460;
+    text-align: center;
+  }
+  .timer-label { font-size: 7px; color: #aaa; margin-bottom: 4px; }
+  .timer-value {
+    font-size: 32px;
+    color: #f5a623;
+    text-shadow: 2px 2px 0 #7b5000;
+  }
+  .timer-bar {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border: 1px solid #555;
+    margin-top: 6px;
+  }
+  .timer-fill {
+    width: 45%;
+    height: 100%;
+    background: #f5a623;
+  }
+
+  /* Group HP */
+  .groups-section {
+    padding: 12px 16px;
+    flex: 1;
+    border-bottom: 2px solid #0f3460;
+  }
+  .groups-label { font-size: 7px; color: #aaa; margin-bottom: 10px; }
+  .group-row {
+    margin-bottom: 10px;
+  }
+  .group-name {
+    font-size: 8px;
+    color: #4ecdc4;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .group-hp-bar {
+    height: 14px;
+    background: #1a1a2e;
+    border: 1px solid #333;
+  }
+  .group-hp-fill {
+    height: 100%;
+  }
+
+  /* Vote results */
+  .vote-section {
+    padding: 12px 16px;
+  }
+  .vote-label { font-size: 7px; color: #aaa; margin-bottom: 8px; }
+  .vote-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .vote-key {
+    font-size: 8px;
+    color: #f5a623;
+    width: 14px;
+  }
+  .vote-bar-bg {
+    flex: 1;
+    height: 12px;
+    background: #1a1a2e;
+    border: 1px solid #333;
+  }
+  .vote-bar-fill {
+    height: 100%;
+    background: #4ecdc4;
+  }
+  .vote-count {
+    font-size: 7px;
+    color: #aaa;
+    width: 20px;
+    text-align: right;
+  }
+
+  /* Control buttons */
+  .controls {
+    grid-column: 1 / -1;
+    background: #0f0f1a;
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    border-top: 3px solid #e94560;
+  }
+  .btn {
+    padding: 8px 16px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-red { background: #e94560; color: white; }
+  .btn-green { background: #2ecc71; color: #0a0a0a; }
+  .btn-blue { background: #3498db; color: white; }
+  .btn-gray { background: #555; color: #ccc; }
+
+  /* ===== STUDENT SCREEN ===== */
+  #student {
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: calc(100vh - 52px);
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .student-header {
+    background: #16213e;
+    padding: 12px 16px;
+    border-bottom: 3px solid #e94560;
+    text-align: center;
+  }
+  .student-title { font-size: 10px; color: #e94560; }
+  .student-group { font-size: 8px; color: #4ecdc4; margin-top: 4px; }
+
+  .student-body {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .stage-badge {
+    background: #0f3460;
+    border: 2px solid #4ecdc4;
+    padding: 8px;
+    text-align: center;
+    font-size: 8px;
+    color: #4ecdc4;
+  }
+
+  .s-question-box {
+    background: #16213e;
+    border: 2px solid #f5a623;
+    padding: 14px;
+  }
+  .s-question-label { font-size: 7px; color: #f5a623; margin-bottom: 8px; }
+  .s-question-text {
+    font-size: 13px;
+    color: #fff;
+    line-height: 2;
+    font-family: '微軟正黑體', sans-serif;
+    font-weight: bold;
+  }
+
+  .s-timer {
+    text-align: center;
+    font-size: 9px;
+    color: #aaa;
+  }
+  .s-timer span {
+    color: #f5a623;
+    font-size: 22px;
+    display: block;
+  }
+
+  .answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .answer-btn {
+    padding: 14px 12px;
+    background: #0f3460;
+    border: 2px solid #3498db;
+    color: white;
+    font-family: '微軟正黑體', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    transition: all 0.1s;
+  }
+  .answer-btn:hover, .answer-btn.selected {
+    background: #3498db;
+    border-color: #4ecdc4;
+  }
+  .answer-btn.selected {
+    background: #e94560;
+    border-color: #e94560;
+  }
+  .answer-key {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #f5a623;
+    min-width: 16px;
+  }
+
+  .submit-btn {
+    background: #2ecc71;
+    border: none;
+    color: #0a0a0a;
+    padding: 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  /* Damage flash */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .shake { animation: shake 0.3s; }
+
+  /* ===== RESULT SCREEN ===== */
+  #result {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    min-height: calc(100vh - 52px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .result-title {
+    font-size: 14px;
+    color: #f5a623;
+    text-align: center;
+    text-shadow: 2px 2px 0 #7b5000;
+  }
+  .damage-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .damage-table th {
+    background: #16213e;
+    padding: 10px 16px;
+    font-size: 8px;
+    color: #4ecdc4;
+    border: 2px solid #0f3460;
+    text-align: left;
+  }
+  .damage-table td {
+    padding: 10px 16px;
+    font-size: 8px;
+    border: 2px solid #0f3460;
+    font-family: '微軟正黑體', sans-serif;
+  }
+  .damage-table tr:nth-child(even) td { background: #16213e; }
+  .damage-table tr:nth-child(odd) td { background: #0d1117; }
+  .dmg-high { color: #e94560; font-weight: bold; }
+  .dmg-mid { color: #f5a623; }
+  .dmg-low { color: #aaa; }
+
+  .correct-answer {
+    background: #0f3460;
+    border: 2px solid #2ecc71;
+    padding: 16px 20px;
+    width: 100%;
+    text-align: center;
+  }
+  .correct-label { font-size: 7px; color: #2ecc71; margin-bottom: 6px; }
+  .correct-text { font-family: '微軟正黑體', sans-serif; font-size: 14px; color: #fff; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('teacher')">📺 老師大螢幕</div>
+  <div class="tab" onclick="showTab('student')">📱 學生手機</div>
+  <div class="tab" onclick="showTab('result')">📊 公布答案</div>
+</div>
+
+<!-- TEACHER SCREEN -->
+<div id="teacher" class="screen active">
+  <div style="display:grid; grid-template-columns:1fr 300px; grid-template-rows:auto 1fr auto; height:calc(100vh - 52px);">
+
+    <!-- Header -->
+    <div class="game-header" style="grid-column:1/-1;">
+      <div class="game-title">⚔ 木蘭傳 ⚔</div>
+      <div style="text-align:center;">
+        <div class="stage-info">第 2 關 / 共 5 關</div>
+        <div class="stage-name">沙場征戰</div>
+      </div>
+      <div style="font-size:8px; color:#aaa;">題目 3 / 5</div>
+    </div>
+
+    <!-- Arena -->
+    <div class="arena">
+      <!-- Monster -->
+      <div class="monster-area">
+        <div class="monster-name">👹 敵軍大將「燕然」</div>
+        <div class="monster-hp-bar">
+          <div class="monster-hp-fill"></div>
+        </div>
+        <!-- Pixel art monster -->
+        <canvas id="monsterCanvas" width="32" height="32" class="monster-sprite" style="width:128px;height:128px;image-rendering:pixelated;"></canvas>
+      </div>
+
+      <!-- Hero -->
+      <div class="hero-area">
+        <canvas id="heroCanvas" width="16" height="24" class="hero-sprite" style="width:64px;height:96px;image-rendering:pixelated;"></canvas>
+        <canvas id="hero2Canvas" width="16" height="24" class="hero-sprite" style="width:64px;height:96px;image-rendering:pixelated;"></canvas>
+        <canvas id="hero3Canvas" width="16" height="24" class="hero-sprite" style="width:64px;height:96px;image-rendering:pixelated;"></canvas>
+      </div>
+
+      <!-- Question -->
+      <div class="question-box">
+        <div class="question-label">▶ 第 3 題</div>
+        <div class="question-text">「萬里赴戎機，關山度若飛」中，「戎機」是什麼意思？</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- QR -->
+      <div class="qr-section">
+        <div class="qr-label">📱 學生掃碼加入</div>
+        <div class="qr-box">
+          <!-- Simple pixel QR placeholder -->
+          <svg width="90" height="90" viewBox="0 0 9 9">
+            <rect width="9" height="9" fill="white"/>
+            <rect x="0" y="0" width="3" height="3" fill="black"/>
+            <rect x="1" y="1" width="1" height="1" fill="white"/>
+            <rect x="6" y="0" width="3" height="3" fill="black"/>
+            <rect x="7" y="1" width="1" height="1" fill="white"/>
+            <rect x="0" y="6" width="3" height="3" fill="black"/>
+            <rect x="1" y="7" width="1" height="1" fill="white"/>
+            <rect x="3" y="0" width="1" height="1" fill="black"/>
+            <rect x="4" y="1" width="1" height="1" fill="black"/>
+            <rect x="5" y="0" width="1" height="1" fill="black"/>
+            <rect x="3" y="3" width="1" height="1" fill="black"/>
+            <rect x="4" y="4" width="1" height="1" fill="black"/>
+            <rect x="5" y="3" width="2" height="1" fill="black"/>
+            <rect x="6" y="4" width="1" height="2" fill="black"/>
+            <rect x="7" y="6" width="2" height="1" fill="black"/>
+            <rect x="3" y="5" width="2" height="1" fill="black"/>
+            <rect x="3" y="7" width="1" height="2" fill="black"/>
+            <rect x="5" y="8" width="2" height="1" fill="black"/>
+          </svg>
+        </div>
+        <div style="font-size:6px;color:#666;margin-top:6px;">mulan-game.web.app</div>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-section">
+        <div class="timer-label">⏱ 剩餘時間</div>
+        <div class="timer-value">14</div>
+        <div class="timer-bar"><div class="timer-fill"></div></div>
+      </div>
+
+      <!-- Groups HP -->
+      <div class="groups-section">
+        <div class="groups-label">🛡 各組血量</div>
+        <div class="group-row">
+          <div class="group-name"><span>A 組（花木蘭隊）</span><span style="color:#fff">80 HP</span></div>
+          <div class="group-hp-bar"><div class="group-hp-fill" style="width:80%;background:#2ecc71;"></div></div>
+        </div>
+        <div class="group-row">
+          <div class="group-name"><span>B 組（花弧隊）</span><span style="color:#fff">55 HP</span></div>
+          <div class="group-hp-bar"><div class="group-hp-fill" style="width:55%;background:#f5a623;"></div></div>
+        </div>
+        <div class="group-row">
+          <div class="group-name"><span>C 組（可汗隊）</span><span style="color:#fff">30 HP</span></div>
+          <div class="group-hp-bar"><div class="group-hp-fill" style="width:30%;background:#e94560;"></div></div>
+        </div>
+      </div>
+
+      <!-- Live votes -->
+      <div class="vote-section">
+        <div class="vote-label">📊 即時票數</div>
+        <div class="vote-option">
+          <div class="vote-key">A</div>
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:50%;"></div></div>
+          <div class="vote-count">12</div>
+        </div>
+        <div class="vote-option">
+          <div class="vote-key">B</div>
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:25%;background:#e94560;"></div></div>
+          <div class="vote-count">6</div>
+        </div>
+        <div class="vote-option">
+          <div class="vote-key">C</div>
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:12%;background:#f5a623;"></div></div>
+          <div class="vote-count">3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" style="grid-column:1/-1;">
+      <button class="btn btn-gray">◀ 上一題</button>
+      <button class="btn btn-green">▶ 開始投票</button>
+      <button class="btn btn-red">⏹ 停止投票</button>
+      <button class="btn btn-blue">✓ 公布答案</button>
+      <button class="btn btn-gray">下一題 ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT SCREEN -->
+<div id="student" class="screen">
+  <div id="student">
+    <div class="student-header">
+      <div class="student-title">⚔ 木蘭傳</div>
+      <div class="student-group">A 組・花木蘭隊 ｜ 80 HP 🛡</div>
+    </div>
+    <div class="student-body">
+      <div class="stage-badge">📍 第 2 關：沙場征戰｜題目 3/5</div>
+
+      <div class="s-question-box">
+        <div class="s-question-label">▶ 第 3 題</div>
+        <div class="s-question-text">「萬里赴戎機，關山度若飛」中，「戎機」是什麼意思？</div>
+      </div>
+
+      <div class="s-timer">剩餘時間<span>14</span></div>
+
+      <div class="answer-options">
+        <button class="answer-btn selected" onclick="selectAnswer(this)">
+          <span class="answer-key">A</span>戰事、軍機要務
+        </button>
+        <button class="answer-btn" onclick="selectAnswer(this)">
+          <span class="answer-key">B</span>戎狄的機關、陷阱
+        </button>
+        <button class="answer-btn" onclick="selectAnswer(this)">
+          <span class="answer-key">C</span>兵器的名稱
+        </button>
+      </div>
+
+      <button class="submit-btn">確認送出 ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result" class="screen">
+  <div class="result-title">✅ 答案公布！</div>
+
+  <div class="correct-answer">
+    <div class="correct-label">正確答案</div>
+    <div class="correct-text">A・戰事、軍機要務</div>
+  </div>
+
+  <table class="damage-table" style="width:100%;">
+    <thead>
+      <tr>
+        <th>組別</th>
+        <th>答對人數</th>
+        <th>答對率</th>
+        <th>造成傷害</th>
+        <th>剩餘 HP</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:#4ecdc4;">A 組・花木蘭隊</td>
+        <td>8 / 10</td>
+        <td>80%</td>
+        <td class="dmg-high">💥 80 傷害</td>
+        <td>80 HP</td>
+      </tr>
+      <tr>
+        <td style="color:#4ecdc4;">B 組・花弧隊</td>
+        <td>5 / 10</td>
+        <td>50%</td>
+        <td class="dmg-mid">⚡ 50 傷害</td>
+        <td>55 HP</td>
+      </tr>
+      <tr>
+        <td style="color:#4ecdc4;">C 組・可汗隊</td>
+        <td>2 / 10</td>
+        <td>20%</td>
+        <td class="dmg-low">🗡 20 傷害</td>
+        <td>30 HP</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="background:#0f3460;border:2px solid #e94560;padding:12px 20px;width:100%;text-align:center;">
+    <div style="font-size:7px;color:#e94560;margin-bottom:4px;">怪物剩餘血量</div>
+    <div style="font-size:12px;color:#fff;">燕然　HP：650 → <span style="color:#e94560;">500</span>（共扣 150 血）</div>
+    <div style="margin-top:8px;height:16px;background:#333;border:2px solid #666;">
+      <div style="width:50%;height:100%;background:linear-gradient(90deg,#ff4444,#ff8800);"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-gray" style="font-size:8px;">◀ 重看題目</button>
+    <button class="btn btn-green" style="font-size:8px;">下一題 ▶</button>
+  </div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function selectAnswer(btn) {
+  document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// Draw pixel monster
+function drawMonster() {
+  const c = document.getElementById('monsterCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const pixels = [
+    [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,1,1,2,2,2,2,2,2,2,2,1,1,0,0,0],
+    [1,1,2,2,3,2,2,2,3,2,2,2,1,1,0,0],
+    [1,2,2,3,3,3,2,3,3,3,2,2,2,1,0,0],
+    [1,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0],
+    [1,2,4,2,2,2,2,2,2,2,4,2,2,1,0,0],
+    [1,2,4,4,2,2,2,2,4,4,2,2,2,1,0,0],
+    [0,1,2,2,5,5,5,5,2,2,2,1,1,0,0,0],
+    [0,0,1,1,2,2,2,2,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,2,2,1,1,0,0,0,0,0,0,0],
+    [0,0,1,6,6,1,1,6,6,1,0,0,0,0,0,0],
+    [0,1,6,6,6,1,1,6,6,6,1,0,0,0,0,0],
+    [0,1,6,6,0,0,0,0,6,6,1,0,0,0,0,0],
+  ];
+  const colors = ['transparent','#222','#cc3333','#ffaa00','#ffffff','#333','#884400'];
+  pixels.forEach((row, y) => {
+    row.forEach((v, x) => {
+      if (v === 0) return;
+      ctx.fillStyle = colors[v];
+      ctx.fillRect(x*2, y*2, 2, 2);
+    });
+  });
+}
+
+// Draw pixel hero (Mulan)
+function drawHero(canvasId, color) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  // Simple pixel character
+  const pixels = [
+    [0,0,1,1,1,0],
+    [0,1,2,2,2,1],
+    [0,1,2,3,2,1],
+    [0,0,1,1,1,0],
+    [0,1,4,4,4,1],
+    [1,4,4,4,4,4],
+    [1,4,1,0,1,4],
+    [0,1,1,0,1,1],
+  ];
+  const colors = ['transparent','#111',color,'#ffddaa','#cc4444'];
+  pixels.forEach((row, y) => {
+    row.forEach((v, x) => {
+      if (v === 0) return;
+      ctx.fillStyle = colors[v];
+      ctx.fillRect(x*2, y*2, 2, 2);
+    });
+  });
+}
+
+drawMonster();
+drawHero('heroCanvas', '#2266cc');
+drawHero('hero2Canvas', '#cc6622');
+drawHero('hero3Canvas', '#22aa44');
+</script>
+</body>
+</html>
