@@ -124,9 +124,63 @@ html_template = """<!DOCTYPE html>
   .modal-btn.primary { background:var(--primary); color:white; }
   .modal-btn.secondary { background:var(--bg); color:var(--dark); }
 
-  @media (max-width:480px) {
+  /* Touch: remove 300ms tap delay */
+  button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+  @media (max-width:600px) {
+    /* Header: 隱藏標題文字，縮小徽章 */
+    header { padding:10px 14px; gap:8px; }
+    header h2 { display:none; }
+    .user-badge { font-size:12px; padding:4px 8px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .score-badge { font-size:12px; padding:4px 8px; white-space:nowrap; }
+
+    /* Filter bar: 橫向捲動，不換行 */
+    .filter-bar { flex-wrap:nowrap; overflow-x:auto; padding:10px 12px; gap:6px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .filter-bar::-webkit-scrollbar { display:none; }
+    .filter-btn { white-space:nowrap; flex-shrink:0; padding:6px 10px; font-size:12px; }
+
+    /* 主要內容 */
+    main { padding:12px; }
+    .question-card { padding:14px; border-radius:12px; margin-bottom:12px; }
     .q-text { font-size:15px; }
-    .opt-btn { font-size:13px; }
+    .opt-btn { font-size:13px; padding:11px 12px; gap:10px; }
+    .opt-letter { min-width:26px; height:26px; font-size:12px; }
+
+    /* 下一題按鈕 sticky，答完不用捲頁 */
+    #next-btn { position:sticky; bottom:12px; box-shadow:0 4px 16px rgba(22,163,74,0.35); border-radius:12px; font-size:15px; padding:13px; }
+
+    /* 解析區 */
+    .explanation { font-size:13px; padding:12px; }
+
+    /* 錯題清單 */
+    .wrong-section { padding:12px; }
+    .wrong-item { padding:13px; }
+    .wrong-item-q { font-size:13px; }
+    .wrong-section h3 { font-size:15px; }
+
+    /* 成績統計 */
+    .stats-section { padding:12px; }
+    .stat-num { font-size:24px; }
+    .stat-label { font-size:11px; }
+    .stats-grid { gap:8px; }
+
+    /* 登入頁 */
+    #login-screen h1 { font-size:22px; }
+    #login-card { padding:24px 18px; border-radius:14px; }
+    #nickname-input { font-size:16px; }
+
+    /* Modal */
+    .modal { padding:24px 20px; }
+    .modal-emoji { font-size:40px; }
+    .modal-title { font-size:18px; }
+    .modal-score { font-size:30px; }
+  }
+
+  @media (max-width:360px) {
+    .stats-grid { grid-template-columns:1fr 1fr; }
+    .stat-num { font-size:20px; }
+    .q-text { font-size:14px; }
+    .opt-btn { font-size:12px; padding:10px 10px; }
   }
 </style>
 </head>
