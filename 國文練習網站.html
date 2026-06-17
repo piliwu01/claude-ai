@@ -108,24 +108,52 @@
   .lesson-stat-fill { height:100%; border-radius:4px; transition:width 0.4s; }
   .reset-btn { width:100%; padding:11px; background:#fee2e2; color:var(--red); border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:14px; touch-action:manipulation; }
 
-  /* ===== LEADERBOARD ===== */
-  .lb-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .lb-refresh { background:var(--light-blue); color:var(--primary); border:none; border-radius:20px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .lb-score-formula { background:var(--card); border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:var(--gray); border-left:4px solid var(--purple); }
-  .lb-score-formula b { color:var(--purple); }
-  .lb-table { background:var(--card); border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
-  .lb-row { display:flex; align-items:center; padding:12px 14px; border-bottom:1px solid var(--border); gap:12px; }
-  .lb-row:last-child { border-bottom:none; }
-  .lb-row.top3 { background:linear-gradient(90deg, rgba(251,191,36,0.08) 0%, transparent 100%); }
-  .lb-rank { min-width:32px; font-size:18px; text-align:center; }
-  .lb-name { flex:1; font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lb-score { font-size:18px; font-weight:700; color:var(--purple); min-width:50px; text-align:right; }
-  .lb-detail { font-size:11px; color:var(--gray); min-width:80px; text-align:right; }
-  .lb-me { background:var(--light-blue) !important; }
-  .lb-loading { text-align:center; padding:30px; color:var(--gray); font-size:14px; }
-  .my-rank-card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,0.05); border-left:4px solid var(--purple); }
-  .my-rank-title { font-size:12px; color:var(--gray); margin-bottom:4px; }
-  .my-rank-val { font-size:22px; font-weight:700; color:var(--purple); }
+  /* ===== LEADERBOARD GAME STYLE ===== */
+  .lb-bg { background:linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#0f172a 100%); min-height:100%; padding:16px 14px 32px; }
+  .lb-top-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .lb-title { font-size:18px; font-weight:700; color:#fff; letter-spacing:1px; }
+  .lb-refresh-btn { background:rgba(255,255,255,0.12); color:#cbd5e1; border:1px solid rgba(255,255,255,0.15); border-radius:20px; padding:5px 12px; font-size:12px; cursor:pointer; font-family:inherit; transition:background 0.2s; }
+  .lb-refresh-btn:hover { background:rgba(255,255,255,0.2); }
+  .lb-formula-pill { display:inline-block; background:rgba(147,51,234,0.2); border:1px solid rgba(147,51,234,0.4); color:#c4b5fd; border-radius:20px; padding:4px 12px; font-size:11px; margin-bottom:16px; }
+
+  /* My rank banner */
+  .my-banner { background:linear-gradient(135deg,#7c3aed,#4f46e5); border-radius:14px; padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 20px rgba(124,58,237,0.4); }
+  .my-banner-icon { font-size:28px; }
+  .my-banner-info { flex:1; }
+  .my-banner-rank { font-size:13px; color:#c4b5fd; }
+  .my-banner-score { font-size:22px; font-weight:700; color:#fff; }
+  .my-banner-detail { font-size:11px; color:#a5b4fc; margin-top:2px; }
+
+  /* Podium */
+  .lb-podium { display:flex; align-items:flex-end; gap:8px; margin-bottom:16px; }
+  .podium-card { flex:1; border-radius:16px; padding:14px 8px 12px; text-align:center; position:relative; animation:podiumIn 0.5s ease both; }
+  .podium-card.p1 { background:linear-gradient(160deg,#f59e0b,#d97706); box-shadow:0 8px 24px rgba(245,158,11,0.5); padding-top:20px; }
+  .podium-card.p2 { background:linear-gradient(160deg,#94a3b8,#64748b); box-shadow:0 6px 16px rgba(148,163,184,0.4); }
+  .podium-card.p3 { background:linear-gradient(160deg,#cd7c3c,#92400e); box-shadow:0 6px 16px rgba(180,83,9,0.4); }
+  .podium-crown { font-size:20px; position:absolute; top:-14px; left:50%; transform:translateX(-50%); }
+  .podium-avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#fff; margin:0 auto 6px; border:3px solid rgba(255,255,255,0.4); }
+  .podium-name { font-size:12px; font-weight:700; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:4px; }
+  .podium-score { font-size:20px; font-weight:700; color:#fff; }
+  .podium-label { font-size:10px; color:rgba(255,255,255,0.7); }
+  .podium-me-ring { box-shadow:0 0 0 3px #fff, 0 0 0 5px #7c3aed; }
+  @keyframes podiumIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .podium-card.p1 { animation-delay:0.1s; }
+  .podium-card.p2 { animation-delay:0.2s; }
+  .podium-card.p3 { animation-delay:0.3s; }
+
+  /* Rank list (4~10) */
+  .lb-list { display:flex; flex-direction:column; gap:8px; }
+  .lb-list-item { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:11px 14px; display:flex; align-items:center; gap:10px; animation:slideIn 0.4s ease both; }
+  .lb-list-item.lb-me { background:rgba(79,70,229,0.25); border-color:rgba(129,140,248,0.5); }
+  @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+  .lb-list-rank { min-width:28px; font-size:14px; font-weight:700; color:#64748b; text-align:center; }
+  .lb-list-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#fff; flex-shrink:0; }
+  .lb-list-name { flex:1; font-size:13px; font-weight:700; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-level { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; margin-left:4px; }
+  .lb-list-right { text-align:right; }
+  .lb-list-score { font-size:17px; font-weight:700; color:#a78bfa; }
+  .lb-list-detail { font-size:10px; color:#64748b; }
+  .lb-loading { text-align:center; padding:40px; color:#64748b; font-size:14px; }
 
   /* ===== MODAL ===== */
   .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; padding:20px; }
@@ -258,22 +286,23 @@
 
   <!-- RANK TAB -->
   <div id="tab-rank" style="display:none">
-    <div class="section-wrap">
-      <div class="lb-header">
-        <h3>🏆 積分排行榜</h3>
-        <button class="lb-refresh" onclick="loadLeaderboard()">重新整理</button>
+    <div class="lb-bg">
+      <div class="lb-top-row">
+        <div class="lb-title">🏆 積分排行榜</div>
+        <button class="lb-refresh-btn" onclick="loadLeaderboard()">🔄 重整</button>
       </div>
-      <div class="lb-score-formula">
-        積分公式：<b>作答題數 + 正確率（%）</b><br>
-        例：答 100 題、正確率 80% → 積分 = 100 + 80 = <b>180</b>
+      <div class="lb-formula-pill">積分 = 作答題數 + 正確率(%)</div>
+      <div id="my-banner" class="my-banner" style="display:none">
+        <div class="my-banner-icon" id="my-banner-icon">🎮</div>
+        <div class="my-banner-info">
+          <div class="my-banner-rank" id="my-banner-rank">我的名次</div>
+          <div class="my-banner-score" id="my-banner-score">0 分</div>
+          <div class="my-banner-detail" id="my-banner-detail"></div>
+        </div>
       </div>
-      <div class="my-rank-card" id="my-rank-card" style="display:none">
-        <div class="my-rank-title">我的目前名次</div>
-        <div class="my-rank-val" id="my-rank-val">—</div>
-      </div>
-      <div class="lb-table" id="lb-table">
-        <div class="lb-loading">載入中…</div>
-      </div>
+      <div id="lb-podium" class="lb-podium" style="display:none"></div>
+      <div id="lb-list" class="lb-list"></div>
+      <div id="lb-loading" class="lb-loading">🔄 載入中…</div>
     </div>
   </div>
 </div>
@@ -689,40 +718,122 @@ function renderStats() {
   }).join('');
 }
 
-// ===== LEADERBOARD =====
+// ===== LEADERBOARD GAME STYLE =====
+function nicknameColor(name) {
+  var palette = ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f43f5e'];
+  var h = 0;
+  for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
+  return palette[Math.abs(h) % palette.length];
+}
+function getLevel(score) {
+  if (score >= 250) return {name:'傳說', color:'#fbbf24', bg:'rgba(251,191,36,0.2)'};
+  if (score >= 200) return {name:'大師', color:'#a855f7', bg:'rgba(168,85,247,0.2)'};
+  if (score >= 150) return {name:'高手', color:'#3b82f6', bg:'rgba(59,130,246,0.2)'};
+  if (score >= 100) return {name:'進階', color:'#f97316', bg:'rgba(249,115,22,0.2)'};
+  if (score >= 50)  return {name:'學徒', color:'#22c55e', bg:'rgba(34,197,94,0.2)'};
+  return {name:'新手', color:'#94a3b8', bg:'rgba(148,163,184,0.2)'};
+}
+function avatarEl(name, size, extraClass) {
+  var color = nicknameColor(name);
+  var ch = name.charAt(0);
+  return '<div class="' + (extraClass||'lb-list-avatar') + '" style="background:' + color + ';width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size*0.42) + 'px">' + ch + '</div>';
+}
+function animScore(el, target) {
+  var start = 0, dur = 800, begin = performance.now();
+  function step(now) {
+    var t = Math.min((now - begin) / dur, 1);
+    var ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 async function loadLeaderboard() {
-  document.getElementById('lb-table').innerHTML = '<div class="lb-loading">🔄 載入中…</div>';
-  document.getElementById('my-rank-card').style.display = 'none';
+  document.getElementById('lb-loading').style.display = 'block';
+  document.getElementById('lb-podium').style.display = 'none';
+  document.getElementById('lb-list').innerHTML = '';
+  document.getElementById('my-banner').style.display = 'none';
   try {
     var rows = await sbGet('cn_scores', { 'order': 'score.desc', 'limit': '10', 'select': 'nickname,total_answered,correct_count,score' });
+    document.getElementById('lb-loading').style.display = 'none';
+
     if (rows.length === 0) {
-      document.getElementById('lb-table').innerHTML = '<div class="lb-loading">還沒有人上榜，快去練習！</div>';
+      document.getElementById('lb-list').innerHTML = '<div class="lb-loading" style="display:block">還沒有人上榜，快去練習！</div>';
       return;
     }
-    var medals = ['🥇','🥈','🥉'];
-    var html = rows.map(function(row, i) {
-      var accuracy = row.total_answered > 0 ? Math.round(row.correct_count/row.total_answered*100) : 0;
+
+    // Find my rank across all
+    var allRows = await sbGet('cn_scores', { 'order': 'score.desc', 'select': 'nickname,score,total_answered,correct_count' });
+    var myIdx = allRows.findIndex(function(r){ return r.nickname === nickname; });
+    if (myIdx !== -1) {
+      var me = allRows[myIdx];
+      var myAcc = me.total_answered > 0 ? Math.round(me.correct_count/me.total_answered*100) : 0;
+      var rankIcons = ['🥇','🥈','🥉'];
+      var rankLabel = myIdx < 3 ? rankIcons[myIdx] + ' 第 ' + (myIdx+1) + ' 名' : '第 ' + (myIdx+1) + ' 名';
+      var lv = getLevel(Math.round(me.score));
+      document.getElementById('my-banner').style.display = 'flex';
+      document.getElementById('my-banner-icon').textContent = myIdx===0?'👑':myIdx===1?'🥈':myIdx===2?'🥉':'🎮';
+      document.getElementById('my-banner-rank').textContent = rankLabel + '  ·  ' + lv.name;
+      var scoreEl = document.getElementById('my-banner-score');
+      scoreEl.textContent = '0 分';
+      animScore(scoreEl, Math.round(me.score));
+      scoreEl.textContent += ' '; // trick: animScore will overwrite, add suffix after
+      document.getElementById('my-banner-detail').textContent = '作答 ' + me.total_answered + ' 題 · 正確率 ' + myAcc + '%';
+      // re-attach suffix after animation
+      setTimeout(function(){ document.getElementById('my-banner-score').textContent = Math.round(me.score) + ' 分'; }, 850);
+    }
+
+    // Podium (top 3)
+    var top3 = rows.slice(0, Math.min(3, rows.length));
+    var podiumOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3.length === 2 ? [top3[1], top3[0]] : [top3[0]];
+    var pClasses = top3.length >= 3 ? ['p2','p1','p3'] : top3.length === 2 ? ['p2','p1'] : ['p1'];
+    var pLabels = top3.length >= 3 ? ['🥈','🥇 👑','🥉'] : top3.length === 2 ? ['🥈','🥇 👑'] : ['🥇 👑'];
+    var pHeights = top3.length >= 3 ? ['','',''] : ['',''];
+
+    var podiumHtml = podiumOrder.map(function(row, i) {
       var isMe = row.nickname === nickname;
-      return '<div class="lb-row ' + (i<3?'top3':'') + (isMe?' lb-me':'') + '">'
-        + '<span class="lb-rank">' + (medals[i] || (i+1)) + '</span>'
-        + '<span class="lb-name">' + escHtml(row.nickname) + (isMe?' 👈':'') + '</span>'
-        + '<span class="lb-detail">' + row.total_answered + '題・' + accuracy + '%</span>'
-        + '<span class="lb-score">' + Math.round(row.score) + '</span>'
+      var acc = row.total_answered > 0 ? Math.round(row.correct_count/row.total_answered*100) : 0;
+      var color = nicknameColor(row.nickname);
+      var cls = pClasses[i];
+      return '<div class="podium-card ' + cls + '">'
+        + (cls==='p1' ? '<div class="podium-crown">👑</div>' : '')
+        + '<div class="podium-avatar' + (isMe?' podium-me-ring':'') + '" style="background:' + color + '">' + row.nickname.charAt(0) + '</div>'
+        + '<div class="podium-name">' + escHtml(row.nickname) + '</div>'
+        + '<div class="podium-score" id="ps_' + i + '">0</div>'
+        + '<div class="podium-label">' + pLabels[i] + '</div>'
         + '</div>';
     }).join('');
-    document.getElementById('lb-table').innerHTML = html;
+    document.getElementById('lb-podium').innerHTML = podiumHtml;
+    document.getElementById('lb-podium').style.display = 'flex';
+    podiumOrder.forEach(function(row, i) {
+      var el = document.getElementById('ps_' + i);
+      if (el) animScore(el, Math.round(row.score));
+    });
 
-    // 顯示自己的名次
-    var myRankRows = await sbGet('cn_scores', { 'select': 'nickname,score', 'order': 'score.desc' });
-    var myIdx = myRankRows.findIndex(function(r){ return r.nickname === nickname; });
-    if (myIdx !== -1) {
-      document.getElementById('my-rank-card').style.display = 'block';
-      var myScore = Math.round(myRankRows[myIdx].score);
-      var rankText = myIdx === 0 ? '🥇 第 1 名' : myIdx === 1 ? '🥈 第 2 名' : myIdx === 2 ? '🥉 第 3 名' : '第 ' + (myIdx+1) + ' 名';
-      document.getElementById('my-rank-val').textContent = rankText + '  ·  積分 ' + myScore;
+    // List (rank 4~10)
+    var rest = rows.slice(3);
+    if (rest.length > 0) {
+      document.getElementById('lb-list').innerHTML = rest.map(function(row, i) {
+        var rank = i + 4;
+        var isMe = row.nickname === nickname;
+        var acc = row.total_answered > 0 ? Math.round(row.correct_count/row.total_answered*100) : 0;
+        var lv = getLevel(Math.round(row.score));
+        return '<div class="lb-list-item' + (isMe?' lb-me':'') + '" style="animation-delay:' + (i*0.06) + 's">'
+          + '<div class="lb-list-rank">' + rank + '</div>'
+          + avatarEl(row.nickname, 36, 'lb-list-avatar')
+          + '<div class="lb-list-name">' + escHtml(row.nickname) + (isMe?' 👈':'')
+            + '<span class="lb-level" style="color:' + lv.color + ';background:' + lv.bg + '">' + lv.name + '</span></div>'
+          + '<div class="lb-list-right">'
+            + '<div class="lb-list-score">' + Math.round(row.score) + '</div>'
+            + '<div class="lb-list-detail">' + row.total_answered + '題・' + acc + '%</div>'
+          + '</div>'
+          + '</div>';
+      }).join('');
     }
   } catch(e) {
-    document.getElementById('lb-table').innerHTML = '<div class="lb-loading">⚠️ 載入失敗，請檢查網路後再試</div>';
+    document.getElementById('lb-loading').style.display = 'none';
+    document.getElementById('lb-list').innerHTML = '<div class="lb-loading" style="display:block;color:#f87171">⚠️ 載入失敗，請重試</div>';
   }
 }
 
