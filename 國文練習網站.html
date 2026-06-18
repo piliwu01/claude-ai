@@ -50,6 +50,24 @@
   header h2 { font-size:14px; font-weight:700; flex:1; }
   .user-badge { background:rgba(255,255,255,0.15); padding:4px 10px; border-radius:20px; font-size:12px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .score-badge { background:var(--primary); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .evo-badge { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; background:rgba(255,255,255,0.18); }
+
+  /* ===== COMBO TOAST ===== */
+  #combo-toast { position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px); background:linear-gradient(135deg,#f97316,#ef4444); color:#fff; font-size:18px; font-weight:900; padding:10px 28px; border-radius:999px; box-shadow:0 4px 20px rgba(239,68,68,0.5); z-index:9999; opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s; white-space:nowrap; }
+  #combo-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ===== EVOLUTION OVERLAY ===== */
+  #evo-overlay { position:fixed; inset:0; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%); opacity:0; pointer-events:none; transition:opacity 0.4s; }
+  #evo-overlay.show { opacity:1; pointer-events:auto; }
+  .evo-icon { font-size:100px; animation:evoBounce 0.6s ease; }
+  .evo-label { font-size:14px; color:rgba(255,255,255,0.6); margin-top:16px; letter-spacing:2px; }
+  .evo-name { font-size:42px; font-weight:900; color:#fff; margin-top:8px; text-shadow:0 0 30px rgba(251,191,36,0.8); }
+  .evo-msg { font-size:16px; color:rgba(255,255,255,0.7); margin-top:12px; }
+  @keyframes evoBounce { 0%{transform:scale(0.3) rotate(-15deg);opacity:0;} 60%{transform:scale(1.2) rotate(5deg);} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
+  @keyframes evoStar { 0%,100%{opacity:0;transform:scale(0);} 50%{opacity:1;transform:scale(1);} }
+  .evo-stars { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .evo-star { position:absolute; border-radius:50%; animation:evoStar 1.2s ease infinite; }
+  .evo-tap-hint { margin-top:32px; font-size:13px; color:rgba(255,255,255,0.35); }
 
   /* ===== TABS ===== */
   .tabs { display:flex; background:var(--card); border-bottom:1px solid var(--border); }
@@ -223,8 +241,22 @@
   <header>
     <h2>國文練習</h2>
     <span class="user-badge" id="user-badge">👤</span>
+    <span class="evo-badge" id="evo-badge">🥚 書蟲蛋</span>
     <span class="score-badge" id="score-badge">✓ 0/0</span>
   </header>
+
+  <!-- COMBO TOAST -->
+  <div id="combo-toast">🔥 3 連勝！</div>
+
+  <!-- EVOLUTION OVERLAY -->
+  <div id="evo-overlay" onclick="closeEvoOverlay()">
+    <div class="evo-stars" id="evo-stars"></div>
+    <div class="evo-icon" id="evo-icon">🥚</div>
+    <div class="evo-label">✨ 進化了！✨</div>
+    <div class="evo-name" id="evo-name">書蟲蛋</div>
+    <div class="evo-msg" id="evo-msg"></div>
+    <div class="evo-tap-hint">點擊任意處繼續</div>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('quiz')">📝 練習</button>
@@ -369,6 +401,8 @@ let sessionCorrect = 0;
 let currentQ = null;
 let answered = false;
 let syncTimer = null;
+let streak = 0;
+let lastEvoLevel = -1;
 
 const KEY_STATS = 'cn_stats';
 const KEY_WRONG = 'cn_wrong';
@@ -550,6 +584,9 @@ function enterApp(name) {
   document.getElementById('user-badge').textContent = '👤 ' + nickname;
   setLesson('all');
   updateScoreBadge();
+  // 初始化進化等級（不觸發動畫）
+  var t = getTotals();
+  lastEvoLevel = getEvolution(computeScore(t.total, t.correct)).level;
 }
 
 // ===== QUIZ =====
@@ -631,10 +668,22 @@ function selectOption(letter, btn) {
     if (l === letter && !isCorrect) b.classList.add('wrong');
   });
   if (!stats[currentQ.id]) stats[currentQ.id] = {correct:0, wrong:0};
-  if (isCorrect) { stats[currentQ.id].correct++; wrongSet.delete(currentQ.id); sessionCorrect++; }
-  else { stats[currentQ.id].wrong++; wrongSet.add(currentQ.id); }
+  if (isCorrect) {
+    stats[currentQ.id].correct++;
+    wrongSet.delete(currentQ.id);
+    sessionCorrect++;
+    streak++;
+    if (streak === 3 || streak === 5 || streak === 10 || (streak > 10 && streak % 5 === 0)) {
+      showComboToast(streak);
+    }
+  } else {
+    stats[currentQ.id].wrong++;
+    wrongSet.add(currentQ.id);
+    streak = 0;
+  }
   saveLocalStorage();
   updateScoreBadge();
+  checkEvoChange();
   scheduleSync();
   if (currentQ.explanation) {
     document.getElementById('explanation-text').textContent = currentQ.explanation;
@@ -645,9 +694,68 @@ function selectOption(letter, btn) {
 
 function nextQuestion() { sessionIdx++; showQuestion(); }
 
+function getEvolution(score) {
+  if (score >= 250) return {level:5, icon:'🐉', name:'文學龍',  color:'#fbbf24', bg:'rgba(251,191,36,0.2)'};
+  if (score >= 200) return {level:4, icon:'⚔️', name:'詩詞士',  color:'#a855f7', bg:'rgba(168,85,247,0.2)'};
+  if (score >= 150) return {level:3, icon:'📖', name:'文字師',  color:'#3b82f6', bg:'rgba(59,130,246,0.2)'};
+  if (score >= 100) return {level:2, icon:'🦋', name:'閱讀蝶',  color:'#22c55e', bg:'rgba(34,197,94,0.2)'};
+  if (score >= 50)  return {level:1, icon:'🐛', name:'小書蟲',  color:'#f97316', bg:'rgba(249,115,22,0.2)'};
+  return                       {level:0, icon:'🥚', name:'書蟲蛋',  color:'#94a3b8', bg:'rgba(148,163,184,0.2)'};
+}
+
 function updateScoreBadge() {
   var t = getTotals();
   document.getElementById('score-badge').textContent = '✓ ' + t.correct + '/' + t.total;
+  var sc = computeScore(t.total, t.correct);
+  var evo = getEvolution(sc);
+  var badge = document.getElementById('evo-badge');
+  badge.textContent = evo.icon + ' ' + evo.name;
+  badge.style.color = evo.color;
+}
+
+function checkEvoChange() {
+  var t = getTotals();
+  var sc = computeScore(t.total, t.correct);
+  var evo = getEvolution(sc);
+  if (evo.level > lastEvoLevel && lastEvoLevel !== -1) {
+    showEvoOverlay(evo);
+  }
+  lastEvoLevel = evo.level;
+}
+
+// ===== COMBO TOAST =====
+var comboToastTimer = null;
+function showComboToast(n) {
+  var el = document.getElementById('combo-toast');
+  var emoji = n >= 10 ? '🔥🔥🔥' : n >= 5 ? '🔥🔥' : '🔥';
+  el.textContent = emoji + ' ' + n + ' 連勝！';
+  el.classList.add('show');
+  clearTimeout(comboToastTimer);
+  comboToastTimer = setTimeout(function() { el.classList.remove('show'); }, 1800);
+}
+
+// ===== EVOLUTION OVERLAY =====
+function showEvoOverlay(evo) {
+  document.getElementById('evo-icon').textContent = evo.icon;
+  document.getElementById('evo-name').textContent = evo.name;
+  document.getElementById('evo-msg').textContent = '恭喜升級！繼續努力！';
+  // generate stars
+  var stars = document.getElementById('evo-stars');
+  stars.innerHTML = '';
+  var colors = ['#fbbf24','#f472b6','#60a5fa','#34d399','#a78bfa'];
+  for (var i = 0; i < 20; i++) {
+    var s = document.createElement('div');
+    s.className = 'evo-star';
+    var size = Math.random() * 10 + 4;
+    s.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + Math.random()*100 + '%;top:' + Math.random()*100 + '%;background:' + colors[i%colors.length] + ';animation-delay:' + (Math.random()*1.2) + 's;animation-duration:' + (0.8+Math.random()*0.8) + 's;';
+    stars.appendChild(s);
+  }
+  var overlay = document.getElementById('evo-overlay');
+  overlay.style.background = 'radial-gradient(circle at center, ' + (evo.level >= 4 ? '#451a03' : evo.level >= 3 ? '#1e1b4b' : '#042f2e') + ' 0%, #0f172a 100%)';
+  overlay.classList.add('show');
+}
+function closeEvoOverlay() {
+  document.getElementById('evo-overlay').classList.remove('show');
 }
 
 // ===== COMPLETE MODAL =====
@@ -726,12 +834,8 @@ function nicknameColor(name) {
   return palette[Math.abs(h) % palette.length];
 }
 function getLevel(score) {
-  if (score >= 250) return {name:'傳說', color:'#fbbf24', bg:'rgba(251,191,36,0.2)'};
-  if (score >= 200) return {name:'大師', color:'#a855f7', bg:'rgba(168,85,247,0.2)'};
-  if (score >= 150) return {name:'高手', color:'#3b82f6', bg:'rgba(59,130,246,0.2)'};
-  if (score >= 100) return {name:'進階', color:'#f97316', bg:'rgba(249,115,22,0.2)'};
-  if (score >= 50)  return {name:'學徒', color:'#22c55e', bg:'rgba(34,197,94,0.2)'};
-  return {name:'新手', color:'#94a3b8', bg:'rgba(148,163,184,0.2)'};
+  var e = getEvolution(score);
+  return {name: e.icon + e.name, color: e.color, bg: e.bg};
 }
 function avatarEl(name, size, extraClass) {
   var color = nicknameColor(name);
