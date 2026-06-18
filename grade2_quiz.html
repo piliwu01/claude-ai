@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌈 二年級生活課程闖關遊戲</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink: #ff6b9d;
+    --orange: #ff9f43;
+    --yellow: #ffd32a;
+    --green: #0be881;
+    --blue: #0fbcf9;
+    --purple: #a55eea;
+    --red: #ff5e57;
+    --light-bg: #fff9f0;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', '微軟正黑體', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* ===== 彩色浮球背景 ===== */
+  .bubble {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.15;
+    animation: float linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes float {
+    0% { transform: translateY(110vh) rotate(0deg); }
+    100% { transform: translateY(-110vh) rotate(720deg); }
+  }
+
+  /* ===== 主要卡片 ===== */
+  .card {
+    background: var(--light-bg);
+    border-radius: 30px;
+    padding: 36px 40px;
+    max-width: 720px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 10;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* ===== 歡迎畫面 ===== */
+  #screen-welcome { text-align: center; }
+  .logo { font-size: 72px; margin-bottom: 8px; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  .title {
+    font-size: 32px; font-weight: 900;
+    background: linear-gradient(90deg, var(--pink), var(--orange), var(--yellow), var(--green), var(--blue), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.3; margin-bottom: 8px;
+  }
+  .subtitle { font-size: 16px; color: #888; margin-bottom: 28px; }
+
+  .name-input-wrap { margin-bottom: 20px; }
+  .name-input-wrap label { display: block; font-size: 18px; font-weight: 700; color: #555; margin-bottom: 10px; }
+  .name-input {
+    width: 100%; padding: 14px 20px;
+    border: 3px solid #e0d4f7;
+    border-radius: 50px; font-size: 20px;
+    font-family: inherit; outline: none;
+    transition: border-color 0.3s;
+    text-align: center;
+  }
+  .name-input:focus { border-color: var(--purple); }
+
+  /* 主題選擇 */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .topic-btn {
+    padding: 18px 12px;
+    border: none; border-radius: 20px;
+    font-family: inherit; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    color: white;
+    position: relative; overflow: hidden;
+  }
+  .topic-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .topic-btn.selected::before { transform: scaleX(1); }
+  .topic-btn:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+  .topic-btn .emoji { font-size: 32px; display: block; margin-bottom: 6px; }
+  .topic-btn-all { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .topic-btn-school { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .topic-btn-family { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .topic-btn-magnet { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+  .topic-btn-friend { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+  /* 開始按鈕 */
+  .start-btn {
+    display: block; width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--orange), var(--pink));
+    border: none; border-radius: 50px;
+    font-family: inherit; font-size: 22px; font-weight: 900;
+    color: white; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,107,157,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 2px;
+  }
+  .start-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(255,107,157,0.6); }
+  .start-btn:active { transform: translateY(0); }
+
+  /* ===== 答題畫面 ===== */
+  #screen-quiz { display: none; }
+
+  /* 頂部資訊列 */
+  .quiz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .player-tag {
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: white; padding: 8px 18px; border-radius: 50px;
+    font-size: 15px; font-weight: 700;
+  }
+  .score-tag {
+    background: linear-gradient(135deg, var(--orange), var(--yellow));
+    color: white; padding: 8px 18px; border-radius: 50px;
+    font-size: 15px; font-weight: 700;
+  }
+  .progress-wrap { width: 100%; background: #e8e0f7; border-radius: 50px; height: 12px; }
+  .progress-bar {
+    height: 12px; border-radius: 50px;
+    background: linear-gradient(90deg, var(--pink), var(--orange), var(--yellow));
+    transition: width 0.5s ease;
+  }
+  .progress-text { text-align: center; font-size: 13px; color: #888; margin-top: 6px; }
+
+  /* 題目區 */
+  .question-wrap { margin-bottom: 24px; }
+  .q-category {
+    display: inline-block;
+    padding: 4px 14px; border-radius: 50px;
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 12px; color: white;
+  }
+  .cat-school { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .cat-family { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .cat-magnet { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a7a50; }
+  .cat-friend { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+  .q-number { font-size: 14px; color: #aaa; margin-bottom: 6px; }
+  .q-text {
+    font-size: 22px; font-weight: 700; color: #333;
+    line-height: 1.6; padding: 20px 24px;
+    background: white;
+    border-radius: 20px;
+    border-left: 6px solid var(--purple);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  /* 選項按鈕 */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .option-btn {
+    padding: 16px 14px;
+    background: white;
+    border: 3px solid #e8e0f7;
+    border-radius: 18px;
+    font-family: inherit; font-size: 17px; font-weight: 700;
+    color: #444; cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    display: flex; align-items: flex-start; gap: 10px;
+    line-height: 1.4;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--purple);
+    background: #f3edff;
+    transform: translateY(-2px);
+  }
+  .option-btn .opt-num {
+    width: 34px; height: 34px; min-width: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8e0f7, #d4c5f9);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 900; color: var(--purple);
+  }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: #e8fff4;
+    color: #1a7a50;
+    animation: correctPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .option-btn.correct .opt-num {
+    background: linear-gradient(135deg, var(--green), #00c77a);
+    color: white;
+  }
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: #fff0ef;
+    color: #b33;
+    animation: shake 0.4s;
+  }
+  .option-btn.wrong .opt-num {
+    background: linear-gradient(135deg, #ff8a80, var(--red));
+    color: white;
+  }
+  .option-btn:disabled { cursor: not-allowed; }
+  @keyframes correctPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* 回饋訊息 */
+  .feedback-msg {
+    margin-top: 16px; padding: 14px 20px;
+    border-radius: 16px; font-size: 18px; font-weight: 700;
+    display: none; text-align: center;
+    animation: fadeIn 0.3s ease;
+  }
+  .feedback-msg.show { display: block; }
+  .feedback-correct { background: #e8fff4; color: #1a7a50; border: 2px solid var(--green); }
+  .feedback-wrong { background: #fff0ef; color: #b33; border: 2px solid var(--red); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 下一題按鈕 */
+  .next-btn {
+    display: none; margin-top: 16px; width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    border: none; border-radius: 50px;
+    font-family: inherit; font-size: 20px; font-weight: 900;
+    color: white; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(118,75,162,0.4);
+    transition: transform 0.2s;
+    letter-spacing: 1px;
+  }
+  .next-btn:hover { transform: translateY(-3px); }
+  .next-btn.show { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ===== 結果畫面 ===== */
+  #screen-result { display: none; text-align: center; }
+  .result-trophy { font-size: 80px; animation: bounce 1.5s ease-in-out infinite; margin-bottom: 12px; }
+  .result-name { font-size: 20px; color: #666; margin-bottom: 8px; }
+  .result-score {
+    font-size: 72px; font-weight: 900;
+    background: linear-gradient(90deg, var(--orange), var(--pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .result-total { font-size: 18px; color: #888; margin-bottom: 20px; }
+  .result-msg {
+    font-size: 22px; font-weight: 700;
+    padding: 16px 24px; border-radius: 20px;
+    margin-bottom: 24px; line-height: 1.6;
+  }
+  .stars-row { font-size: 48px; margin-bottom: 20px; letter-spacing: 4px; }
+
+  .result-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .result-btn {
+    flex: 1; min-width: 140px; padding: 16px;
+    border: none; border-radius: 50px;
+    font-family: inherit; font-size: 18px; font-weight: 700;
+    color: white; cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .result-btn:hover { transform: translateY(-3px); }
+  .btn-review { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a6a40; }
+  .btn-restart { background: linear-gradient(135deg, var(--orange), var(--pink)); }
+
+  /* ===== 錯題回顧畫面 ===== */
+  #screen-review { display: none; }
+  .review-title {
+    font-size: 26px; font-weight: 900;
+    text-align: center; margin-bottom: 24px;
+    color: #444;
+  }
+  .review-item {
+    background: white; border-radius: 18px;
+    padding: 18px 20px; margin-bottom: 14px;
+    border-left: 6px solid var(--red);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  }
+  .review-q { font-size: 17px; font-weight: 700; color: #333; margin-bottom: 10px; }
+  .review-opts { font-size: 15px; color: #555; margin-bottom: 8px; line-height: 1.8; }
+  .review-your { color: var(--red); font-weight: 700; }
+  .review-ans { color: #1a7a50; font-weight: 700; }
+  .back-btn {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    border: none; border-radius: 50px;
+    font-family: inherit; font-size: 20px; font-weight: 900;
+    color: white; cursor: pointer; margin-top: 20px;
+    transition: transform 0.2s;
+  }
+  .back-btn:hover { transform: translateY(-3px); }
+
+  /* 星星爆炸效果 */
+  .confetti-piece {
+    position: fixed; width: 10px; height: 10px;
+    border-radius: 2px; pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall 2s ease-out forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== 響應式 ===== */
+
+  /* ── 平板（480px ~ 768px）── */
+  @media (min-width: 480px) and (max-width: 768px) {
+    body { padding: 16px; align-items: flex-start; padding-top: 24px; }
+    .card { padding: 28px 28px; border-radius: 24px; }
+
+    /* 歡迎畫面 */
+    .logo { font-size: 60px; }
+    .title { font-size: 28px; }
+    .topic-btn { font-size: 15px; }
+    .topic-btn .emoji { font-size: 28px; }
+    .start-btn { font-size: 20px; padding: 16px; }
+
+    /* 答題畫面：選項改單欄，文字更清楚 */
+    .options-grid { grid-template-columns: 1fr; gap: 10px; }
+    .option-btn { font-size: 17px; padding: 18px 16px; min-height: 56px; }
+    .q-text { font-size: 20px; }
+
+    /* 成績畫面 */
+    .result-score { font-size: 64px; }
+    .result-btns { flex-direction: row; }
+
+    /* 頭部資訊列 */
+    .quiz-header { gap: 8px; }
+  }
+
+  /* ── 手機（< 480px）── */
+  @media (max-width: 479px) {
+    body { padding: 0; align-items: flex-start; background: var(--light-bg); }
+    .bubble { display: none; } /* 手機省效能 */
+
+    .card {
+      padding: 20px 16px;
+      border-radius: 0 0 28px 28px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      min-height: 100dvh;
+    }
+
+    /* 歡迎畫面 */
+    .logo { font-size: 52px; }
+    .title { font-size: 22px; }
+    .subtitle { font-size: 14px; }
+    .name-input { font-size: 18px; padding: 12px 16px; }
+    .topic-grid { grid-template-columns: 1fr; gap: 10px; }
+    .topic-btn { font-size: 15px; padding: 14px 12px; }
+    .topic-btn .emoji { font-size: 26px; margin-bottom: 4px; }
+    .start-btn { font-size: 19px; padding: 16px; }
+
+    /* 答題畫面 */
+    .quiz-header { gap: 6px; }
+    .player-tag, .score-tag { font-size: 13px; padding: 6px 14px; }
+    .q-text { font-size: 18px; padding: 16px; line-height: 1.7; }
+    .options-grid { grid-template-columns: 1fr; gap: 10px; }
+    .option-btn {
+      font-size: 16px; padding: 16px 14px;
+      min-height: 52px; /* 觸控友善 */
+    }
+    .option-btn .opt-num { width: 30px; height: 30px; min-width: 30px; font-size: 14px; }
+    .feedback-msg { font-size: 16px; padding: 12px 16px; }
+    .next-btn { font-size: 18px; padding: 15px; }
+
+    /* 成績畫面 */
+    .result-trophy { font-size: 64px; }
+    .result-score { font-size: 56px; }
+    .result-msg { font-size: 18px; padding: 14px 16px; }
+    .result-btns { flex-direction: column; gap: 10px; }
+    .result-btn { font-size: 17px; }
+    .stars-row { font-size: 38px; }
+
+    /* 錯題回顧 */
+    .review-title { font-size: 22px; }
+    .review-q { font-size: 15px; }
+    .review-opts { font-size: 13px; }
+    .back-btn { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 浮球背景 -->
+<script>
+  const colors = ['#ff6b9d','#ff9f43','#ffd32a','#0be881','#0fbcf9','#a55eea'];
+  for (let i = 0; i < 8; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const s = Math.random() * 80 + 30;
+    b.style.cssText = `width:${s}px;height:${s}px;background:${colors[i%colors.length]};
+      left:${Math.random()*100}%;animation-duration:${Math.random()*12+8}s;
+      animation-delay:${Math.random()*8}s;`;
+    document.body.appendChild(b);
+  }
+</script>
+
+<!-- 歡迎畫面 -->
+<div class="card" id="screen-welcome">
+  <div class="logo">🌈</div>
+  <div class="title">生活課程<br>闖關大挑戰！</div>
+  <div class="subtitle">國小二年級 · 選擇題練習</div>
+
+  <div class="name-input-wrap">
+    <label for="name-field">✏️ 請輸入你的名字：</label>
+    <input type="text" id="name-field" class="name-input" placeholder="例如：小明" maxlength="10" autocomplete="off">
+  </div>
+
+  <p style="font-size:16px;font-weight:700;color:#555;margin-bottom:12px;">🎯 選擇關卡：</p>
+  <div class="topic-grid">
+    <button class="topic-btn topic-btn-all selected" onclick="selectTopic('all',this)">
+      <span class="emoji">🌟</span>全部混合（44題）
+    </button>
+    <button class="topic-btn topic-btn-school" onclick="selectTopic('school',this)">
+      <span class="emoji">🏫</span>升學新期待（13題）
+    </button>
+    <button class="topic-btn topic-btn-family" onclick="selectTopic('family',this)">
+      <span class="emoji">❤️</span>家人關愛（14題）
+    </button>
+    <button class="topic-btn topic-btn-magnet" onclick="selectTopic('magnet',this)">
+      <span class="emoji">🧲</span>磁鐵小達人（15題）
+    </button>
+  </div>
+
+  <button class="start-btn" onclick="startQuiz()">🚀 開始闖關！</button>
+</div>
+
+<!-- 答題畫面 -->
+<div class="card" id="screen-quiz" style="display:none;">
+  <div class="quiz-header">
+    <div class="player-tag" id="player-name-tag">🐤 小朋友</div>
+    <div class="score-tag" id="score-tag">⭐ 0 分</div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progress-text">第 1 題 / 共 44 題</div>
+  </div>
+
+  <div class="question-wrap">
+    <div class="q-number" id="q-number">題目 1</div>
+    <span class="q-category" id="q-category"></span>
+    <div class="q-text" id="q-text">題目載入中...</div>
+  </div>
+
+  <div class="options-grid" id="options-grid"></div>
+
+  <div class="feedback-msg" id="feedback-msg"></div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 ➡️</button>
+</div>
+
+<!-- 結果畫面 -->
+<div class="card" id="screen-result" style="display:none;">
+  <div class="result-trophy" id="result-trophy">🏆</div>
+  <div class="result-name" id="result-name-display">小朋友</div>
+  <div class="result-score" id="result-score">0</div>
+  <div class="result-total" id="result-total">/ 44 題答對</div>
+  <div class="stars-row" id="stars-row">⭐⭐⭐⭐⭐</div>
+  <div class="result-msg" id="result-msg"></div>
+  <div class="result-btns">
+    <button class="result-btn btn-review" onclick="showReview()">📖 查看錯題</button>
+    <button class="result-btn btn-restart" onclick="goHome()">🏠 再玩一次</button>
+  </div>
+</div>
+
+<!-- 錯題回顧畫面 -->
+<div class="card" id="screen-review" style="display:none;">
+  <div class="review-title">📖 錯題回顧</div>
+  <div id="review-list"></div>
+  <button class="back-btn" onclick="showResult()">⬅️ 返回成績</button>
+</div>
+
+<script>
+// ========== 題庫 ==========
+const ALL_QUESTIONS = [
+  // 升學新期待
+  { id:1, cat:'school', catLabel:'🏫 升學新期待', text:'快要升三年級了，應該怎麼做？', opts:['擔心有新的課程','祝福自己和同學','每天都不開心','祈禱以後沒功課'], ans:1 },
+  { id:5, cat:'school', catLabel:'🏫 升學新期待', text:'怎麼做可以知道三年級有什麼改變？', opts:['看三年級的功課表','訪問學長或學姐','參觀三年級教室','以上皆是'], ans:3 },
+  { id:19, cat:'school', catLabel:'🏫 升學新期待', text:'有了自己的新期待後，應該怎麼做才好？', opts:['天天打電動玩具','整天看卡通影片','想一想完成的方法','整天許願'], ans:2 },
+  { id:22, cat:'school', catLabel:'🏫 升學新期待', text:'如果我升上三年級之後不太適應，可以如何處理呢？', opts:['默默忍受','請教老師','躲在家中，不想上學','假裝不舒服，請病假'], ans:1 },
+  { id:24, cat:'school', catLabel:'🏫 升學新期待', text:'對自己有了新的期待後，可以怎麼做呢？', opts:['想出達成的方法','整天看電視','天天打電動','每天祈禱'], ans:0 },
+  { id:25, cat:'school', catLabel:'🏫 升學新期待', text:'聽同學分享自主學習計畫時，我應該要怎麼做？', opts:['嘲笑他','想想還有沒有其他建議','覺得他的計畫很無聊','打瞌睡'], ans:1 },
+  { id:26, cat:'school', catLabel:'🏫 升學新期待', text:'訪問學長姐前不用準備什麼？', opts:['邀請學長姐','紅包','要問的問題','記錄的工具'], ans:1 },
+  { id:27, cat:'school', catLabel:'🏫 升學新期待', text:'〈心願〉這首歌曲聽起來有什麼感覺？', opts:['很吵','悲傷','優美','很快'], ans:2 },
+  { id:31, cat:'school', catLabel:'🏫 升學新期待', text:'知道跟好朋友不能分在同一班時，可以怎麼做？', opts:['從此不理他','大吵大鬧','約他下課一起玩','不去上課'], ans:2 },
+  { id:33, cat:'school', catLabel:'🏫 升學新期待', text:'哪一個不是要升上三年級的好期待？', opts:['交到更多新朋友','沒有作業','籃球打得更好','學習更進步'], ans:1 },
+  { id:37, cat:'school', catLabel:'🏫 升學新期待', text:'想要交到更多新朋友，應該怎麼做？', opts:['多跟同學說話','害羞不講話','一個人安靜看書','整天愁眉苦臉'], ans:0 },
+  { id:40, cat:'school', catLabel:'🏫 升學新期待', text:'訪問三年級學長、學姐時，要怎麼有秩序的提問？', opts:['直接開口問','全班同時間問','先舉手，再提問','故意不問問題'], ans:2 },
+  { id:43, cat:'school', catLabel:'🏫 升學新期待', text:'從觀察大樹小花活動可以學到什麼方法呢？', opts:['造句','傾聽','歌唱','記錄'], ans:3 },
+
+  // 家人關愛
+  { id:4, cat:'family', catLabel:'❤️ 家人關愛', text:'看到家人身體不舒服，我應該怎麼做？', opts:['關心他','嘲笑他','不理他','請他幫我做事'], ans:0 },
+  { id:6, cat:'family', catLabel:'❤️ 家人關愛', text:'把卡片送給家人時，應該要怎麼做？', opts:['藏在沒有人找得到的地方','隨便丟給他','丟給家人後，快步跑走','親手交給對方'], ans:3 },
+  { id:10, cat:'family', catLabel:'❤️ 家人關愛', text:'和弟弟吵架被家人責備了，該怎麼辦呢？', opts:['痛哭流涕','生他的氣','不理他','好好說明自己的感受'], ans:3 },
+  { id:11, cat:'family', catLabel:'❤️ 家人關愛', text:'下面哪一種不是感謝家人的好方法？', opts:['寫關懷小紙條','做出讓人擔心的事情','主動幫忙家人','製作感謝卡片'], ans:1 },
+  { id:13, cat:'family', catLabel:'❤️ 家人關愛', text:'家中成員意見不同時，應該要怎麼做？', opts:['聽爸爸的','聽媽媽的','互相傾聽後討論','猜拳決定'], ans:2 },
+  { id:14, cat:'family', catLabel:'❤️ 家人關愛', text:'姐姐生病了，你可以為他做什麼？', opts:['幫他寫功課','倒水給他喝','不用管他','削水果給他吃'], ans:1 },
+  { id:15, cat:'family', catLabel:'❤️ 家人關愛', text:'媽媽要我吃我討厭的青菜時，我該怎麼辦？', opts:['堅決不吃','跟他好好溝通','大哭大鬧','把菜丟掉'], ans:1 },
+  { id:16, cat:'family', catLabel:'❤️ 家人關愛', text:'哥哥不小心跌倒，腳受傷不能走路，你應該怎麼做？', opts:['嘲笑他','不理他','幫他拿東西','幫他寫功課'], ans:2 },
+  { id:21, cat:'family', catLabel:'❤️ 家人關愛', text:'想要感謝家人的關愛，哪一個行為不適合呢？', opts:['寫一張小卡片','抱一抱對方','要求更多零用錢','唱首感謝的歌曲'], ans:2 },
+  { id:28, cat:'family', catLabel:'❤️ 家人關愛', text:'母親節是五月的哪一天呢？', opts:['第一個星期一','第三個星期天','最後一個星期六','第二個星期天'], ans:3 },
+  { id:29, cat:'family', catLabel:'❤️ 家人關愛', text:'哪個不是家人表達關心的方式？', opts:['說體貼的話','打架','煮晚餐給我吃','送我上學'], ans:1 },
+  { id:30, cat:'family', catLabel:'❤️ 家人關愛', text:'家人照顧我們時，該怎麼做才好？', opts:['不聽他們的話','讓他們生氣','生他們的氣','常常謝謝他們'], ans:3 },
+  { id:32, cat:'family', catLabel:'❤️ 家人關愛', text:'想對家人表達感謝，怎麼做比較好？', opts:['零用錢全拿去買禮物','不理他們','很兇的講話','寫卡片'], ans:3 },
+  { id:42, cat:'family', catLabel:'❤️ 家人關愛', text:'怎麼做可以讓全家更快樂呢？', opts:['一起做家事','互相照顧','一起做運動','以上皆可'], ans:3 },
+  { id:44, cat:'family', catLabel:'❤️ 家人關愛', text:'送給家人卡片時，他們會覺得如何？', opts:['很感動','很驚嚇','傷心難過','假裝沒這回事'], ans:0 },
+
+  // 磁鐵小達人
+  { id:7, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'磁鐵能吸住下列哪一種物品？', opts:['塑膠','鐵片','木頭','玻璃'], ans:1 },
+  { id:8, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'門後面的門擋是利用什麼原理將門固定住的？', opts:['磁力','風力','水力','彈力'], ans:0 },
+  { id:9, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'教室哪個地方不會有磁鐵？', opts:['黑板上','圖卡背面','門後的牆壁','玻璃窗上'], ans:3 },
+  { id:12, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'哪一個遊戲的製作是利用磁鐵會吸住鐵製品的特性呢？', opts:['蝸牛要回家','釣魚得分王','動物賽跑大賽','以上皆是'], ans:3 },
+  { id:17, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'同學分享磁鐵玩具的玩法時，應該怎麼做才好？', opts:['畫圖','聊天','專心聆聽','趴在桌上'], ans:2 },
+  { id:18, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'玩同學的磁鐵玩具時，不應該做哪件事？', opts:['排隊輪流玩','按照玩法玩','好玩就帶回家','謝謝同學'], ans:2 },
+  { id:20, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'磁鐵可以吸住什麼材質的物品？', opts:['木頭','銀器','鐵器','玻璃'], ans:2 },
+  { id:23, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'想玩其他組做的磁鐵遊戲時，我應該怎麼做？', opts:['詢問是否可以借玩','直接就玩，不需徵求同意','請老師幫我跟別組借','請同學多做一個給我帶回家玩'], ans:0 },
+  { id:34, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'下列哪一個家中的物品無法被磁鐵吸引？', opts:['鐵釘','冰箱','烤箱','木桌'], ans:3 },
+  { id:35, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'磁鐵遊戲中的迷宮不適合畫在哪裡？', opts:['圖畫紙','抹布','白紙','卡紙'], ans:1 },
+  { id:36, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'玩磁鐵遊戲時，應該怎麼做？', opts:['輪流玩','搶先玩','隨便玩','霸占玩具'], ans:0 },
+  { id:38, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'在紙的下方放什麼東西，能看起來像磁鐵把紙吸起來？', opts:['迴紋針','塑膠尺','棉花','鉛筆'], ans:0 },
+  { id:39, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'磁鐵隔著什麼東西不能吸住鐵製品？', opts:['紙張','很厚的書','手帕','墊板'], ans:1 },
+  { id:41, cat:'magnet', catLabel:'🧲 磁鐵小達人', text:'進行磁鐵遊戲的律動時，應該要怎麼做？', opts:['邊做邊大叫','聽從老師的指令','推擠其他人','覺得害羞'], ans:1 },
+
+  // 溝通交友
+  { id:2, cat:'friend', catLabel:'💬 溝通交友', text:'跟家人溝通想法時，應該怎麼做？', opts:['低頭什麼都不說','很兇的發脾氣','勇敢說出來','邊哭邊說'], ans:2 },
+  { id:3, cat:'friend', catLabel:'💬 溝通交友', text:'別組的磁鐵玩具不知道玩法時，應該要怎麼做？', opts:['隨便玩','偷哭','請教製作的組員','嘲笑他們一點都不好玩'], ans:2 },
+];
+
+const CATEGORY_COLORS = {
+  school: 'cat-school',
+  family: 'cat-family',
+  magnet: 'cat-magnet',
+  friend: 'cat-friend',
+};
+
+// ========== 遊戲狀態 ==========
+let playerName = '';
+let selectedTopic = 'all';
+let quizQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let wrongItems = [];
+let answered = false;
+
+// ========== 歡迎畫面 ==========
+function selectTopic(topic, btn) {
+  selectedTopic = topic;
+  document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const nameVal = document.getElementById('name-field').value.trim();
+  playerName = nameVal || '小朋友';
+
+  let pool = ALL_QUESTIONS;
+  if (selectedTopic !== 'all') {
+    pool = ALL_QUESTIONS.filter(q => q.cat === selectedTopic);
+  }
+  quizQuestions = shuffle(pool);
+  currentIndex = 0;
+  score = 0;
+  wrongItems = [];
+
+  document.getElementById('player-name-tag').textContent = `🐤 ${playerName}`;
+  document.getElementById('score-tag').textContent = '⭐ 0 分';
+
+  showScreen('quiz');
+  renderQuestion();
+}
+
+// ========== 答題 ==========
+function renderQuestion() {
+  const q = quizQuestions[currentIndex];
+  const total = quizQuestions.length;
+
+  document.getElementById('progress-bar').style.width = `${(currentIndex/total)*100}%`;
+  document.getElementById('progress-text').textContent = `第 ${currentIndex+1} 題 / 共 ${total} 題`;
+  document.getElementById('q-number').textContent = `題目 ${currentIndex+1}`;
+
+  const catEl = document.getElementById('q-category');
+  catEl.textContent = q.catLabel;
+  catEl.className = `q-category ${CATEGORY_COLORS[q.cat]}`;
+
+  document.getElementById('q-text').textContent = q.text;
+
+  const grid = document.getElementById('options-grid');
+  const nums = ['①','②','③','④'];
+  grid.innerHTML = q.opts.map((opt, i) => `
+    <button class="option-btn" id="opt-${i}" onclick="selectAnswer(${i})">
+      <span class="opt-num">${nums[i]}</span>
+      <span>${opt}</span>
+    </button>
+  `).join('');
+
+  document.getElementById('feedback-msg').className = 'feedback-msg';
+  document.getElementById('next-btn').className = 'next-btn';
+  answered = false;
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+
+  const q = quizQuestions[currentIndex];
+  const isCorrect = (idx === q.ans);
+
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.ans) btn.classList.add('correct');
+    else if (i === idx && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback-msg');
+  if (isCorrect) {
+    score++;
+    document.getElementById('score-tag').textContent = `⭐ ${score} 分`;
+    fb.textContent = '🎉 答對了！你好厲害！';
+    fb.className = 'feedback-msg show feedback-correct';
+    launchConfetti();
+  } else {
+    wrongItems.push({ ...q, yourAns: idx });
+    fb.textContent = `😅 答錯了！正確答案是「${q.opts[q.ans]}」`;
+    fb.className = 'feedback-msg show feedback-wrong';
+  }
+
+  const nextBtn = document.getElementById('next-btn');
+  const isLast = currentIndex === quizQuestions.length - 1;
+  nextBtn.textContent = isLast ? '查看成績 🎊' : '下一題 ➡️';
+  nextBtn.className = 'next-btn show';
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= quizQuestions.length) {
+    showResultScreen();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ========== 成績畫面 ==========
+function showResultScreen() {
+  const total = quizQuestions.length;
+  const pct = score / total;
+
+  let trophy, msg, msgStyle, stars;
+  if (pct >= 0.9) {
+    trophy = '🏆'; stars = '⭐⭐⭐⭐⭐';
+    msg = `哇！${playerName} 超厲害！幾乎全對！你是生活課的小天才！🌟`;
+    msgStyle = 'background:#fffbe6;color:#b7790a;border:2px solid #ffd32a;';
+  } else if (pct >= 0.7) {
+    trophy = '🥇'; stars = '⭐⭐⭐⭐';
+    msg = `很棒喔，${playerName}！答對好多題！再努力一下就能拿滿分！💪`;
+    msgStyle = 'background:#e6f7ff;color:#0070b8;border:2px solid #0fbcf9;';
+  } else if (pct >= 0.5) {
+    trophy = '🥈'; stars = '⭐⭐⭐';
+    msg = `不錯唷，${playerName}！有一半以上答對！複習一下錯題，下次會更好！😊`;
+    msgStyle = 'background:#e8fff4;color:#1a7a50;border:2px solid #0be881;';
+  } else {
+    trophy = '💪'; stars = '⭐⭐';
+    msg = `${playerName}，別灰心！看看錯題複習一下，你一定可以進步的！加油！🌈`;
+    msgStyle = 'background:#fff0ef;color:#b33;border:2px solid #ff5e57;';
+  }
+
+  document.getElementById('result-trophy').textContent = trophy;
+  document.getElementById('result-name-display').textContent = playerName;
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-total').textContent = `/ ${total} 題答對`;
+  document.getElementById('stars-row').textContent = stars;
+  document.getElementById('result-msg').textContent = msg;
+  document.getElementById('result-msg').style.cssText = msgStyle;
+
+  showScreen('result');
+  if (pct >= 0.9) launchMassConfetti();
+}
+
+// ========== 錯題回顧 ==========
+function showReview() {
+  const list = document.getElementById('review-list');
+  if (wrongItems.length === 0) {
+    list.innerHTML = '<div style="text-align:center;font-size:20px;padding:20px;">🎉 你全部答對了！沒有錯題！</div>';
+  } else {
+    const nums = ['①','②','③','④'];
+    list.innerHTML = wrongItems.map((q, i) => `
+      <div class="review-item">
+        <div class="review-q">${i+1}. ${q.text}</div>
+        <div class="review-opts">
+          ${q.opts.map((opt, oi) => `
+            <span style="margin-right:12px;${oi===q.ans?'color:#1a7a50;font-weight:900;':''}">${nums[oi]} ${opt}</span>
+          `).join('')}
+        </div>
+        <div class="review-your">❌ 你的答案：${nums[q.yourAns]} ${q.opts[q.yourAns]}</div>
+        <div class="review-ans">✅ 正確答案：${nums[q.ans]} ${q.opts[q.ans]}</div>
+      </div>
+    `).join('');
+  }
+  showScreen('review');
+}
+
+function showResult() { showScreen('result'); }
+function goHome() { showScreen('welcome'); }
+
+// ========== 畫面切換 ==========
+function showScreen(name) {
+  ['welcome','quiz','result','review'].forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    el.style.display = (s === name) ? 'block' : 'none';
+    if (s === name) el.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+  });
+}
+
+// ========== 彩帶效果 ==========
+function launchConfetti() {
+  const colors = ['#ff6b9d','#ff9f43','#ffd32a','#0be881','#0fbcf9','#a55eea'];
+  for (let i = 0; i < 12; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `
+      left:${Math.random()*100}vw;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${Math.random()*1+1.5}s;
+      animation-delay:${Math.random()*0.4}s;
+      width:${Math.random()*8+6}px;height:${Math.random()*8+6}px;
+      border-radius:${Math.random()>0.5?'50%':'3px'};
+    `;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2500);
+  }
+}
+
+function launchMassConfetti() {
+  for (let i = 0; i < 5; i++) {
+    setTimeout(launchConfetti, i * 300);
+  }
+}
+</script>
+</body>
+</html>
