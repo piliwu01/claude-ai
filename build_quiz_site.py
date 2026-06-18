@@ -953,14 +953,13 @@ async function loadLeaderboard() {
 
 // ===== RESET =====
 function confirmReset() {
-  if (!confirm('確定要清除本機的所有練習紀錄嗎？')) return;
+  if (!confirm('確定要清除本機的所有練習紀錄嗎？\n（雲端排行榜分數不受影響）')) return;
   stats = {}; wrongSet = new Set();
   saveLocalStorage();
   updateScoreBadge();
   renderStats();
   renderWrongList();
-  syncScore();
-  alert('已清除本機紀錄。');
+  alert('已清除本機紀錄。雲端分數保留不變。');
 }
 </script>
 </body>
