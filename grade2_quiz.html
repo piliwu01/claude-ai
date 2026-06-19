@@ -331,6 +331,40 @@
   }
   .back-btn:hover { transform: translateY(-3px); }
 
+  /* ===== 排行榜 ===== */
+  .leaderboard-wrap {
+    margin-top: 20px;
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-align: left;
+  }
+  .leaderboard-title {
+    font-size: 18px; font-weight: 900;
+    color: #444; margin-bottom: 12px;
+    text-align: center;
+  }
+  .lb-row {
+    display: flex; align-items: center;
+    padding: 10px 12px; border-radius: 12px;
+    margin-bottom: 6px; gap: 10px;
+    background: #f9f5ff;
+    font-size: 15px;
+    transition: transform 0.15s;
+  }
+  .lb-row:hover { transform: translateX(4px); }
+  .lb-rank { font-size: 20px; min-width: 32px; text-align: center; }
+  .lb-name { flex: 1; font-weight: 700; color: #333; }
+  .lb-topic { font-size: 11px; color: #aaa; white-space: nowrap; }
+  .lb-score { font-weight: 900; color: var(--purple); font-size: 16px; white-space: nowrap; }
+  .lb-row.mine {
+    background: linear-gradient(135deg, #fff7e6, #ffe4f0);
+    border: 2px solid var(--orange);
+  }
+  .lb-loading { text-align: center; color: #999; font-size: 15px; padding: 12px; }
+  .save-status { text-align: center; font-size: 13px; color: #aaa; margin-top: 8px; }
+
   /* 星星爆炸效果 */
   .confetti-piece {
     position: fixed; width: 10px; height: 10px;
@@ -420,6 +454,7 @@
     .back-btn { font-size: 18px; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -502,6 +537,11 @@
     <button class="result-btn btn-review" onclick="showReview()">📖 查看錯題</button>
     <button class="result-btn btn-restart" onclick="goHome()">🏠 再玩一次</button>
   </div>
+  <div class="leaderboard-wrap">
+    <div class="leaderboard-title">🏅 前 10 名排行榜</div>
+    <div id="leaderboard-list"><div class="lb-loading">⏳ 載入中...</div></div>
+  </div>
+  <div class="save-status" id="save-status"></div>
 </div>
 
 <!-- 錯題回顧畫面 -->
@@ -512,6 +552,45 @@
 </div>
 
 <script>
+// ========== Supabase ==========
+const SUPABASE_URL = 'https://zgzyhrturiyvaxzrerqq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_13WIeVf-SOo9T5xIkBfMPQ_9YybQG-l';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function saveScore(name, sc, total, topic) {
+  const { error } = await sb.from('quiz_scores').insert({
+    player_name: name, score: sc, total: total, topic: topic
+  });
+  const statusEl = document.getElementById('save-status');
+  statusEl.textContent = error ? '⚠️ 分數儲存失敗' : '✅ 分數已記錄';
+}
+
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboard-list');
+  const { data, error } = await sb
+    .from('quiz_scores')
+    .select('player_name, score, total, topic, played_at')
+    .order('score', { ascending: false })
+    .order('played_at', { ascending: true })
+    .limit(10);
+
+  if (error || !data) { el.innerHTML = '<div class="lb-loading">⚠️ 無法載入排行榜</div>'; return; }
+  if (data.length === 0) { el.innerHTML = '<div class="lb-loading">🎉 還沒有人玩過，你是第一個！</div>'; return; }
+
+  const medals = ['🥇','🥈','🥉'];
+  const topicLabels = { all:'全部', school:'升學', family:'家人', magnet:'磁鐵', friend:'溝通' };
+
+  el.innerHTML = data.map((row, i) => {
+    const isMine = (row.player_name === playerName && row.score === score && row.topic === selectedTopic);
+    return `<div class="lb-row ${isMine ? 'mine' : ''}">
+      <span class="lb-rank">${medals[i] || (i+1)}</span>
+      <span class="lb-name">${row.player_name}</span>
+      <span class="lb-topic">${topicLabels[row.topic] || row.topic}</span>
+      <span class="lb-score">${row.score}/${row.total}</span>
+    </div>`;
+  }).join('');
+}
+
 // ========== 題庫 ==========
 const ALL_QUESTIONS = [
   // 升學新期待
@@ -690,7 +769,7 @@ function nextQuestion() {
 }
 
 // ========== 成績畫面 ==========
-function showResultScreen() {
+async function showResultScreen() {
   const total = quizQuestions.length;
   const pct = score / total;
 
@@ -723,6 +802,12 @@ function showResultScreen() {
 
   showScreen('result');
   if (pct >= 0.9) launchMassConfetti();
+
+  // 自動儲存分數 + 載入排行榜
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('leaderboard-list').innerHTML = '<div class="lb-loading">⏳ 載入中...</div>';
+  await saveScore(playerName, score, quizQuestions.length, selectedTopic);
+  await loadLeaderboard();
 }
 
 // ========== 錯題回顧 ==========
