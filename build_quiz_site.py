@@ -99,10 +99,36 @@ html_template = """<!DOCTYPE html>
   .evo-star { position:absolute; border-radius:50%; animation:evoStar 1.2s ease infinite; }
   .evo-tap-hint { margin-top:32px; font-size:13px; color:rgba(255,255,255,0.35); }
 
+  /* ===== TIMER ===== */
+  .timer-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .timer-bar-bg { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .timer-bar-fill { height:100%; border-radius:4px; transition:width 1s linear, background 1s; }
+  .timer-num { font-size:13px; font-weight:700; min-width:28px; text-align:right; }
+
   /* ===== TABS ===== */
-  .tabs { display:flex; background:var(--card); border-bottom:1px solid var(--border); }
-  .tab-btn { flex:1; padding:11px 4px; border:none; background:none; font-family:inherit; font-size:12px; cursor:pointer; color:var(--gray); border-bottom:3px solid transparent; transition:all 0.2s; white-space:nowrap; }
+  .tabs { display:flex; background:var(--card); border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab-btn { flex:1; min-width:fit-content; padding:11px 8px; border:none; background:none; font-family:inherit; font-size:12px; cursor:pointer; color:var(--gray); border-bottom:3px solid transparent; transition:all 0.2s; white-space:nowrap; }
   .tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:700; }
+  .tab-btn.admin-tab { color:#7c3aed; }
+  .tab-btn.admin-tab.active { color:#7c3aed; border-bottom-color:#7c3aed; }
+
+  /* ===== ADMIN PANEL ===== */
+  #tab-admin { display:none; }
+  .admin-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px 12px 0; }
+  .admin-stat { background:var(--card); border-radius:10px; padding:12px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  .admin-stat-num { font-size:22px; font-weight:700; color:#7c3aed; }
+  .admin-stat-label { font-size:11px; color:var(--gray); margin-top:2px; }
+  .admin-table-wrap { padding:12px; overflow-x:auto; }
+  .admin-table { width:100%; border-collapse:collapse; font-size:13px; min-width:500px; }
+  .admin-table th { background:#f8fafc; padding:8px 10px; text-align:left; font-size:11px; color:var(--gray); border-bottom:2px solid var(--border); white-space:nowrap; }
+  .admin-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .admin-table tr:hover td { background:#f8fafc; }
+  .admin-del-btn { background:#fee2e2; color:#dc2626; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer; font-family:inherit; font-weight:600; }
+  .admin-del-btn:hover { background:#fca5a5; }
+  .admin-acc-bar { display:inline-flex; align-items:center; gap:6px; }
+  .admin-bar-bg { width:60px; height:5px; background:var(--border); border-radius:3px; overflow:hidden; display:inline-block; }
+  .admin-bar-fill { height:5px; border-radius:3px; }
 
   /* ===== FILTER ===== */
   .filter-bar { padding:10px 12px; background:var(--card); border-bottom:1px solid var(--border); display:flex; gap:6px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -372,6 +398,7 @@ html_template = """<!DOCTYPE html>
     <button class="tab-btn" onclick="switchTab('wrong')">❌ 錯題</button>
     <button class="tab-btn" onclick="switchTab('stats')">📊 成績</button>
     <button class="tab-btn" onclick="switchTab('rank')">🏆 排行榜</button>
+    <button class="tab-btn admin-tab" id="admin-tab-btn" onclick="switchTab('admin')" style="display:none">🔑 管理</button>
   </div>
 
   <!-- QUIZ TAB -->
@@ -387,6 +414,10 @@ html_template = """<!DOCTYPE html>
     <main>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="progress-text" id="progress-text"></div>
+      <div class="timer-row">
+        <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="width:100%;background:#22c55e"></div></div>
+        <span class="timer-num" id="timer-num" style="color:#22c55e">60</span>
+      </div>
       <div class="question-card">
         <div class="q-meta">
           <span class="q-num" id="q-num"></span>
@@ -422,6 +453,22 @@ html_template = """<!DOCTYPE html>
       </div>
       <div id="lesson-stats"></div>
       <button class="reset-btn" onclick="confirmReset()">🗑️ 清除本機紀錄</button>
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" style="display:none">
+    <div class="admin-summary" id="admin-summary"></div>
+    <div class="admin-table-wrap">
+      <div id="admin-loading" style="text-align:center;padding:20px;color:var(--gray)">🔄 載入中…</div>
+      <table class="admin-table" id="admin-table" style="display:none">
+        <thead>
+          <tr>
+            <th>名次</th><th>暱稱</th><th>積分</th><th>作答</th><th>正確率</th><th>最後更新</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -512,6 +559,9 @@ let answered = false;
 let syncTimer = null;
 let streak = 0;
 let lastEvoLevel = -1;
+let timerCount = 60;
+let timerInterval = null;
+const TIMER_SEC = 60;
 
 const KEY_STATS = 'cn_stats';
 const KEY_WRONG = 'cn_wrong';
@@ -698,6 +748,10 @@ function enterApp(name) {
   // 初始化進化等級（不觸發動畫）
   var t = getTotals();
   lastEvoLevel = getEvolution(computeScore(t.total, t.correct)).level;
+  // 管理員 Tab（僅 piliwu）
+  if (name === 'piliwu') {
+    document.getElementById('admin-tab-btn').style.display = '';
+  }
 }
 
 // ===== QUIZ =====
@@ -761,6 +815,7 @@ function showQuestion() {
   });
   document.getElementById('explanation-box').classList.remove('show');
   document.getElementById('next-btn').classList.remove('show');
+  startTimer();
 }
 
 function escHtml(s) {
@@ -770,6 +825,7 @@ function escHtml(s) {
 function selectOption(letter, btn) {
   if (answered) return;
   answered = true;
+  clearTimer();
   var correct = currentQ.answer;
   var isCorrect = letter === correct;
   document.querySelectorAll('.opt-btn').forEach(function(b) {
@@ -798,6 +854,55 @@ function selectOption(letter, btn) {
   scheduleSync();
   if (currentQ.explanation) {
     document.getElementById('explanation-text').textContent = currentQ.explanation;
+    document.getElementById('explanation-box').classList.add('show');
+  }
+  document.getElementById('next-btn').classList.add('show');
+}
+
+// ===== TIMER =====
+function startTimer() {
+  clearTimer();
+  timerCount = TIMER_SEC;
+  updateTimerUI();
+  timerInterval = setInterval(function() {
+    timerCount--;
+    updateTimerUI();
+    if (timerCount <= 0) {
+      clearTimer();
+      if (!answered) timeUp();
+    }
+  }, 1000);
+}
+function clearTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+function updateTimerUI() {
+  var pct = timerCount / TIMER_SEC * 100;
+  var color = timerCount > 30 ? '#22c55e' : timerCount > 10 ? '#f97316' : '#ef4444';
+  var bar = document.getElementById('timer-bar');
+  var num = document.getElementById('timer-num');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = color; }
+  if (num) { num.textContent = timerCount; num.style.color = color; }
+}
+function timeUp() {
+  if (answered) return;
+  answered = true;
+  var correct = currentQ.answer;
+  document.querySelectorAll('.opt-btn').forEach(function(b) {
+    b.disabled = true;
+    if (b.querySelector('.opt-letter').textContent === correct) b.classList.add('correct');
+  });
+  if (!stats[currentQ.id]) stats[currentQ.id] = {correct:0, wrong:0};
+  stats[currentQ.id].wrong++;
+  wrongSet.add(currentQ.id);
+  streak = 0;
+  saveLocalStorage();
+  updateScoreBadge();
+  checkEvoChange();
+  scheduleSync();
+  if (currentQ.explanation) {
+    document.getElementById('explanation-text').textContent = '⏰ 時間到！' + currentQ.explanation;
     document.getElementById('explanation-box').classList.add('show');
   }
   document.getElementById('next-btn').classList.add('show');
@@ -888,15 +993,82 @@ function restartLesson() { document.getElementById('complete-modal').classList.r
 
 // ===== TABS =====
 function switchTab(tab) {
-  ['quiz','wrong','stats','rank'].forEach(function(t){
+  var allTabs = ['quiz','wrong','stats','rank','admin'];
+  allTabs.forEach(function(t){
     document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
   });
-  document.querySelectorAll('.tab-btn').forEach(function(b,i){
-    b.classList.toggle('active', ['quiz','wrong','stats','rank'][i]===tab);
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    var tid = b.getAttribute('onclick').match(/'(\w+)'/);
+    if (tid) b.classList.toggle('active', tid[1]===tab);
   });
   if (tab==='wrong') renderWrongList();
   if (tab==='stats') renderStats();
   if (tab==='rank') { syncScore(); loadLeaderboard(); }
+  if (tab==='admin') loadAdminPanel();
+}
+
+// ===== ADMIN PANEL =====
+async function loadAdminPanel() {
+  document.getElementById('admin-loading').style.display = 'block';
+  document.getElementById('admin-table').style.display = 'none';
+  document.getElementById('admin-summary').innerHTML = '';
+  try {
+    var rows = await sbGet('cn_scores', { order:'score.desc', select:'nickname,total_answered,correct_count,score,updated_at' });
+    document.getElementById('admin-loading').style.display = 'none';
+    var active = rows.filter(function(r){ return r.total_answered > 0; });
+    var avgAcc = active.length ? Math.round(active.reduce(function(s,r){ return s + (r.total_answered>0?r.correct_count/r.total_answered:0); },0)/active.length*100) : 0;
+    document.getElementById('admin-summary').innerHTML =
+      '<div class="admin-stat"><div class="admin-stat-num">' + rows.length + '</div><div class="admin-stat-label">帳號總數</div></div>' +
+      '<div class="admin-stat"><div class="admin-stat-num">' + active.length + '</div><div class="admin-stat-label">有作答人數</div></div>' +
+      '<div class="admin-stat"><div class="admin-stat-num">' + avgAcc + '%</div><div class="admin-stat-label">平均正確率</div></div>';
+    var tbody = document.getElementById('admin-tbody');
+    tbody.innerHTML = '';
+    rows.forEach(function(row, i) {
+      var acc = row.total_answered > 0 ? Math.round(row.correct_count/row.total_answered*100) : null;
+      var date = row.updated_at ? row.updated_at.slice(0,10) : '-';
+      var accColor = acc === null ? '#94a3b8' : acc >= 60 ? '#16a34a' : acc >= 40 ? '#f97316' : '#dc2626';
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + (i+1) + '</td>'
+        + '<td style="font-weight:600">' + escHtml(row.nickname) + '</td>'
+        + '<td style="font-weight:700;color:#7c3aed">' + Math.round(row.score) + '</td>'
+        + '<td>' + row.total_answered + '</td>'
+        + '<td><div class="admin-acc-bar"><span style="color:' + accColor + ';font-weight:600;min-width:36px">' + (acc!==null?acc+'%':'—') + '</span><span class="admin-bar-bg"><span class="admin-bar-fill" style="width:' + (acc||0) + '%;background:' + accColor + '"></span></span></div></td>'
+        + '<td style="color:#94a3b8;font-size:12px">' + date + '</td>'
+        + '<td><button class="admin-del-btn">刪除</button></td>';
+      var delBtn = tr.querySelector('.admin-del-btn');
+      delBtn.dataset.name = row.nickname;
+      delBtn.addEventListener('click', function(){ adminDelete(this.dataset.name, this); });
+      tbody.appendChild(tr);
+    });
+    document.getElementById('admin-table').style.display = 'table';
+  } catch(e) {
+    document.getElementById('admin-loading').textContent = '⚠️ 載入失敗，請稍後再試';
+  }
+}
+
+async function adminDelete(name, btn) {
+  if (!confirm('確定刪除「' + name + '」的帳號與成績？')) return;
+  btn.disabled = true;
+  btn.textContent = '刪除中…';
+  try {
+    await sbDelete('cn_scores', 'nickname=eq.' + encodeURIComponent(name));
+    await sbDelete('cn_users', 'nickname=eq.' + encodeURIComponent(name));
+    btn.closest('tr').remove();
+    loadAdminPanel();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '刪除';
+    alert('刪除失敗，請重試');
+  }
+}
+
+async function sbDelete(table, filter) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + filter, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=representation' }
+  });
+  if (!res.ok) throw new Error('delete error ' + res.status);
+  return res.json();
 }
 
 // ===== WRONG LIST =====
