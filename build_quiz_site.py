@@ -34,7 +34,27 @@ html_template = """<!DOCTYPE html>
   body { font-family: "微軟正黑體","Microsoft JhengHei",sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
 
   /* ===== LOGIN ===== */
-  #login-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+  #login-screen { display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:24px 16px 48px; }
+  #login-screen > h1 { margin-top:40px; }
+
+  /* ===== INFO SECTION ===== */
+  #info-section { width:100%; max-width:680px; margin-top:40px; }
+  .info-card { background:var(--card); border-radius:14px; padding:20px 22px; box-shadow:0 2px 10px rgba(0,0,0,0.06); margin-bottom:16px; }
+  .info-card-title { font-size:16px; font-weight:700; color:#1d4ed8; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #dbeafe; display:flex; align-items:center; gap:6px; }
+  .info-body { font-size:13px; color:#334155; line-height:1.8; }
+  .info-body li { margin-left:18px; margin-bottom:4px; }
+  .score-formula-box { background:linear-gradient(135deg,#fef9c3,#fef3c7); border:2px solid #fbbf24; border-radius:10px; padding:12px 16px; text-align:center; margin:10px 0; }
+  .score-formula-box .formula { font-size:18px; font-weight:900; color:#92400e; }
+  .score-formula-box .example { font-size:12px; color:#b45309; margin-top:4px; }
+  .evo-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  .evo-table th { background:#1e40af; color:#fff; padding:8px 10px; text-align:center; }
+  .evo-table td { padding:7px 10px; border-bottom:1px solid #e2e8f0; }
+  .evo-table tr:nth-child(even) td { background:#f0f9ff; }
+  .evo-table td:first-child { text-align:center; font-weight:700; }
+  .evo-table td:nth-child(2) { text-align:center; font-size:18px; }
+  .combo-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .combo-badge { background:#fff7ed; border:1px solid #fed7aa; border-radius:20px; padding:4px 12px; font-size:13px; font-weight:700; color:#c2410c; white-space:nowrap; }
+  .combo-desc { font-size:13px; color:#334155; }
   #login-screen h1 { font-size:26px; font-weight:700; margin-bottom:6px; text-align:center; }
   #login-screen p.sub { color:var(--gray); margin-bottom:28px; text-align:center; font-size:14px; }
   #login-card { background:var(--card); border-radius:16px; padding:32px 28px; box-shadow:0 4px 24px rgba(0,0,0,0.08); width:100%; max-width:400px; }
@@ -243,6 +263,84 @@ html_template = """<!DOCTYPE html>
       <div id="step2-msg" class="login-msg"></div>
       <button class="login-back" onclick="backToStep1()">← 換一個暱稱</button>
     </div>
+  </div>
+
+  <!-- ===== 說明區塊 ===== -->
+  <div id="info-section">
+
+    <!-- 帳號與登入 -->
+    <div class="info-card">
+      <div class="info-card-title">🔐 帳號與登入</div>
+      <div class="info-body">
+        <ol>
+          <li>首次使用請輸入自訂暱稱（建議用班號＋座號，例如：703-01）</li>
+          <li>設定密碼（至少 4 個字元），下次以相同暱稱與密碼登入即可</li>
+          <li>練習紀錄自動儲存至雲端，可跨裝置查看</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- 積分公式 -->
+    <div class="info-card">
+      <div class="info-card-title">🧮 積分計算公式</div>
+      <div class="score-formula-box">
+        <div class="formula">積分 ＝ 已作答題數 ＋ 正確率（%）</div>
+        <div class="example">範例：答了 80 題、答對 60 題 → 正確率 75% → 積分 = 80 + 75 = 155 分</div>
+      </div>
+      <div class="info-body">💡 提升積分的關鍵是<strong>正確率</strong>，不只是多答題！</div>
+    </div>
+
+    <!-- 排行榜 -->
+    <div class="info-card">
+      <div class="info-card-title">🏆 排行榜規則</div>
+      <div class="info-body">
+        <ol>
+          <li>排行榜顯示全班積分前 10 名，每次作答後即時同步</li>
+          <li>前三名顯示金銀銅獎台，並標示段位稱號</li>
+          <li>可跨裝置查看排名，隨時掌握自己的名次</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- 進化段位 -->
+    <div class="info-card">
+      <div class="info-card-title">⚡ 進化段位系統（學者進化）</div>
+      <div class="info-body" style="margin-bottom:10px">根據累積積分自動升級，升級時會出現進化動畫特效！🎉</div>
+      <table class="evo-table">
+        <tr><th>段位</th><th>圖示</th><th>所需積分</th><th>描述</th></tr>
+        <tr><td>書蟲蛋</td><td>🥚</td><td>0–49 分</td><td>剛開始練習的新手</td></tr>
+        <tr><td>小書蟲</td><td>🐛</td><td>50–99 分</td><td>已有基本答題能力</td></tr>
+        <tr><td>閱讀蝶</td><td>🦋</td><td>100–149 分</td><td>答題正確率明顯提升</td></tr>
+        <tr><td>文字師</td><td>📖</td><td>150–199 分</td><td>對課文有深入理解</td></tr>
+        <tr><td>詩詞士</td><td>⚔️</td><td>200–249 分</td><td>達到高手程度</td></tr>
+        <tr><td>文學龍</td><td>🐉</td><td>250 分以上</td><td>傳說中的文學王者！</td></tr>
+      </table>
+    </div>
+
+    <!-- 連勝 Combo -->
+    <div class="info-card">
+      <div class="info-card-title">🔥 連勝獎勵（Combo）</div>
+      <div class="info-body" style="margin-bottom:10px">連續答對題目可獲得連勝提示，答錯一題即重置！</div>
+      <div class="combo-row"><span class="combo-badge">🔥 3 連勝</span><span class="combo-desc">連續答對 3 題</span></div>
+      <div class="combo-row"><span class="combo-badge">🔥🔥 5 連勝</span><span class="combo-desc">連續答對 5 題</span></div>
+      <div class="combo-row"><span class="combo-badge">🔥🔥🔥 10 連勝</span><span class="combo-desc">連續答對 10 題（最強！）</span></div>
+    </div>
+
+    <!-- 練習建議 -->
+    <div class="info-card">
+      <div class="info-card-title">📚 練習建議</div>
+      <div class="info-body">
+        <ul>
+          <li>建議每天練習 20～30 題，養成習慣</li>
+          <li>善用「錯題複習」功能，反覆練習弱點題目</li>
+          <li>衝刺積分的關鍵是提高正確率，而非只追求題數</li>
+          <li>登入後可隨時查看個人成績統計與各課文進度</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:#94a3b8;font-size:13px;margin-top:8px;padding-bottom:8px">🐉 目標：成為傳說中的文學龍！加油！</div>
+
   </div>
 </div>
 
