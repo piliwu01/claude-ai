@@ -366,7 +366,10 @@ html_template = """<!DOCTYPE html>
       </div>
     </div>
 
-    <div style="text-align:center;color:#94a3b8;font-size:13px;margin-top:8px;padding-bottom:8px">🐉 目標：成為傳說中的文學龍！加油！</div>
+    <div style="text-align:center;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:14px 20px;margin-top:4px">
+      <div style="font-size:18px;font-weight:900;color:#dc2626">⚠️ 不雅帳號會被刪除，不要亂取名喔！</div>
+    </div>
+    <div style="text-align:center;color:#94a3b8;font-size:13px;margin-top:12px;padding-bottom:8px">🐉 目標：成為傳說中的文學龍！加油！</div>
 
   </div>
 </div>
