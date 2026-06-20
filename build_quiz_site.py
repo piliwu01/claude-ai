@@ -291,11 +291,6 @@ html_template = """<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- 警示訊息 -->
-  <div style="width:100%;max-width:400px;margin-top:14px;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:14px 20px;text-align:center">
-    <div style="font-size:17px;font-weight:900;color:#dc2626">⚠️ 不雅帳號會被刪除，不要亂取名喔！</div>
-  </div>
-
   <!-- ===== 說明區塊 ===== -->
   <div id="info-section">
 
@@ -308,6 +303,9 @@ html_template = """<!DOCTYPE html>
           <li>設定密碼（至少 4 個字元），下次以相同暱稱與密碼登入即可</li>
           <li>練習紀錄自動儲存至雲端，可跨裝置查看</li>
         </ol>
+        <div style="margin-top:12px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:6px;padding:10px 14px;font-size:14px;font-weight:900;color:#dc2626">
+          ⚠️ 不雅帳號會被刪除，不要亂取名喔！
+        </div>
       </div>
     </div>
 
