@@ -277,7 +277,8 @@
         <div class="formula">積分 ＝ 已作答題數 ＋ 正確率（%）</div>
         <div class="example">範例：答了 80 題、答對 60 題 → 正確率 75% → 積分 = 80 + 75 = 155 分</div>
       </div>
-      <div class="info-body">💡 提升積分的關鍵是<strong>正確率</strong>，不只是多答題！</div>
+      <div class="info-body" style="margin-top:8px">💡 提升積分的關鍵是<strong>正確率</strong>，不只是多答題！</div>
+      <div class="info-body" style="margin-top:6px;color:#dc2626">⚠️ 正確率低於 30% 時，積分折半計算。</div>
     </div>
 
     <!-- 排行榜 -->
@@ -522,7 +523,9 @@ function saveLocalStorage() {
 function computeScore(totalAnswered, correctCount) {
   if (totalAnswered === 0) return 0;
   var accuracy = Math.round(correctCount / totalAnswered * 100);
-  return totalAnswered + accuracy;
+  var score = totalAnswered + accuracy;
+  if (accuracy < 30) score = Math.round(score / 2);
+  return score;
 }
 function getTotals() {
   var total = 0, correct = 0;
