@@ -85,6 +85,8 @@ html_template = """<!DOCTYPE html>
   /* ===== COMBO TOAST ===== */
   #combo-toast { position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px); background:linear-gradient(135deg,#f97316,#ef4444); color:#fff; font-size:18px; font-weight:900; padding:10px 28px; border-radius:999px; box-shadow:0 4px 20px rgba(239,68,68,0.5); z-index:9999; opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s; white-space:nowrap; }
   #combo-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #penalty-toast { position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px); background:linear-gradient(135deg,#7c3aed,#dc2626); color:#fff; font-size:18px; font-weight:900; padding:10px 28px; border-radius:999px; box-shadow:0 4px 20px rgba(220,38,38,0.5); z-index:9999; opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s; white-space:nowrap; }
+  #penalty-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   /* ===== EVOLUTION OVERLAY ===== */
   #evo-overlay { position:fixed; inset:0; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%); opacity:0; pointer-events:none; transition:opacity 0.4s; }
@@ -313,11 +315,11 @@ html_template = """<!DOCTYPE html>
     <div class="info-card">
       <div class="info-card-title">🧮 積分計算公式</div>
       <div class="score-formula-box">
-        <div class="formula">積分 ＝ 已作答題數 ＋ 正確率（%）</div>
-        <div class="example">範例：答了 80 題、答對 60 題 → 正確率 75% → 積分 = 80 + 75 = 155 分</div>
+        <div class="formula">積分 ＝ 答對題數 － 扣分</div>
+        <div class="example">連續答錯 5 題 → 扣 5 分（可累計）</div>
       </div>
-      <div class="info-body" style="margin-top:8px">💡 提升積分的關鍵是<strong>正確率</strong>，不只是多答題！</div>
-      <div class="info-body" style="margin-top:6px;color:#dc2626">⚠️ 正確率低於 30% 時，積分折半計算。</div>
+      <div class="info-body" style="margin-top:8px">💡 只有答對才能得分，答錯不得分！</div>
+      <div class="info-body" style="margin-top:6px;color:#dc2626">💀 連續答錯 5 題會被扣 5 分，不要亂猜！</div>
     </div>
 
     <!-- 排行榜 -->
@@ -385,6 +387,8 @@ html_template = """<!DOCTYPE html>
 
   <!-- COMBO TOAST -->
   <div id="combo-toast">🔥 3 連勝！</div>
+  <!-- PENALTY TOAST -->
+  <div id="penalty-toast">💀 連錯 5 題，扣 5 分！</div>
 
   <!-- EVOLUTION OVERLAY -->
   <div id="evo-overlay" onclick="closeEvoOverlay()">
@@ -482,7 +486,7 @@ html_template = """<!DOCTYPE html>
         <div class="lb-title">🏆 積分排行榜</div>
         <button class="lb-refresh-btn" onclick="loadLeaderboard()">🔄 重整</button>
       </div>
-      <div class="lb-formula-pill">積分 = 作答題數 + 正確率(%)</div>
+      <div class="lb-formula-pill">積分 = 答對題數　💀 連錯 5 題扣 5 分</div>
       <div id="my-banner" class="my-banner" style="display:none">
         <div class="my-banner-icon" id="my-banner-icon">🎮</div>
         <div class="my-banner-info">
@@ -561,6 +565,8 @@ let currentQ = null;
 let answered = false;
 let syncTimer = null;
 let streak = 0;
+let wrongStreak = 0;
+let sessionPenalty = 0;
 let lastEvoLevel = -1;
 let timerCount = 60;
 let timerInterval = null;
@@ -584,11 +590,7 @@ function saveLocalStorage() {
 
 // ===== SCORE FORMULA =====
 function computeScore(totalAnswered, correctCount) {
-  if (totalAnswered === 0) return 0;
-  var accuracy = Math.round(correctCount / totalAnswered * 100);
-  var score = totalAnswered + accuracy;
-  if (accuracy < 30) score = Math.round(score / 2);
-  return score;
+  return Math.max(0, correctCount - sessionPenalty);
 }
 function getTotals() {
   var total = 0, correct = 0;
@@ -843,6 +845,7 @@ function selectOption(letter, btn) {
     wrongSet.delete(currentQ.id);
     sessionCorrect++;
     streak++;
+    wrongStreak = 0;
     if (streak === 3 || streak === 5 || streak === 10 || (streak > 10 && streak % 5 === 0)) {
       showComboToast(streak);
     }
@@ -850,6 +853,12 @@ function selectOption(letter, btn) {
     stats[currentQ.id].wrong++;
     wrongSet.add(currentQ.id);
     streak = 0;
+    wrongStreak++;
+    if (wrongStreak >= 5) {
+      sessionPenalty += 5;
+      wrongStreak = 0;
+      showPenaltyToast();
+    }
   }
   saveLocalStorage();
   updateScoreBadge();
@@ -940,6 +949,16 @@ function checkEvoChange() {
     showEvoOverlay(evo);
   }
   lastEvoLevel = evo.level;
+}
+
+// ===== PENALTY TOAST =====
+var penaltyToastTimer = null;
+function showPenaltyToast() {
+  var el = document.getElementById('penalty-toast');
+  el.textContent = '💀 連錯 5 題，扣 5 分！（累計扣 ' + sessionPenalty + ' 分）';
+  el.classList.add('show');
+  clearTimeout(penaltyToastTimer);
+  penaltyToastTimer = setTimeout(function() { el.classList.remove('show'); }, 2500);
 }
 
 // ===== COMBO TOAST =====
