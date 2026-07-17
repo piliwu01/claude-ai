@@ -66,6 +66,10 @@ html_template = """<!DOCTYPE html>
   .login-btn:disabled { background:#94a3b8; cursor:default; }
   .login-btn.green { background:var(--green); }
   .login-btn.green:hover { background:#15803d; }
+  .login-btn.admin-entry { background:#7c3aed; margin-top:12px; }
+  .login-btn.admin-entry:hover { background:#6d28d9; }
+  .login-divider { display:flex; align-items:center; gap:10px; margin-top:14px; color:#94a3b8; font-size:12px; }
+  .login-divider::before, .login-divider::after { content:""; height:1px; background:var(--border); flex:1; }
   .login-msg { margin-top:12px; padding:10px 14px; border-radius:8px; font-size:13px; display:none; }
   .login-msg.error { background:#fee2e2; color:var(--red); display:block; }
   .login-msg.info { background:var(--light-blue); color:var(--primary); display:block; }
@@ -280,6 +284,8 @@ html_template = """<!DOCTYPE html>
       <input type="text" id="nickname-input" class="login-input" placeholder="例：小明、7年3班" maxlength="20" autocomplete="off">
       <button class="login-btn" id="step1-btn" onclick="step1Next()">繼續 →</button>
       <div id="step1-msg" class="login-msg"></div>
+      <div class="login-divider">或</div>
+      <button class="login-btn admin-entry" id="admin-entry-btn" onclick="openAdminFromLogin()">🔑 管理員登入</button>
     </div>
     <!-- Step 2: 密碼 -->
     <div id="login-step2">
@@ -302,7 +308,7 @@ html_template = """<!DOCTYPE html>
       <div class="info-body">
         <ol>
           <li>首次使用請輸入自訂暱稱（建議用班號＋座號，例如：703-01）</li>
-          <li>設定密碼（至少 4 個字元），下次以相同暱稱與密碼登入即可</li>
+          <li>設定密碼（至少 6 個字元），下次以相同暱稱與密碼登入即可</li>
           <li>練習紀錄自動儲存至雲端，可跨裝置查看</li>
         </ol>
         <div style="margin-top:12px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:6px;padding:10px 14px;font-size:14px;font-weight:900;color:#dc2626">
@@ -405,7 +411,7 @@ html_template = """<!DOCTYPE html>
     <button class="tab-btn" onclick="switchTab('wrong')">❌ 錯題</button>
     <button class="tab-btn" onclick="switchTab('stats')">📊 成績</button>
     <button class="tab-btn" onclick="switchTab('rank')">🏆 排行榜</button>
-    <button class="tab-btn admin-tab" id="admin-tab-btn" onclick="switchTab('admin')" style="display:none">🔑 管理</button>
+    <button class="tab-btn admin-tab" id="admin-tab-btn" onclick="switchTab('admin')">🔑 管理</button>
   </div>
 
   <!-- QUIZ TAB -->
@@ -465,17 +471,30 @@ html_template = """<!DOCTYPE html>
 
   <!-- ADMIN TAB -->
   <div id="tab-admin" style="display:none">
-    <div class="admin-summary" id="admin-summary"></div>
-    <div class="admin-table-wrap">
-      <div id="admin-loading" style="text-align:center;padding:20px;color:var(--gray)">🔄 載入中…</div>
-      <table class="admin-table" id="admin-table" style="display:none">
-        <thead>
-          <tr>
-            <th>名次</th><th>暱稱</th><th>積分</th><th>作答</th><th>正確率</th><th>最後更新</th><th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="admin-tbody"></tbody>
-      </table>
+    <div id="admin-auth" class="section-wrap">
+      <h3>🔐 管理員登入</h3>
+      <label class="login-label" for="admin-email">Email</label>
+      <input type="email" id="admin-email" class="login-input" placeholder="管理員 Email" autocomplete="username">
+      <label class="login-label" for="admin-password">密碼</label>
+      <input type="password" id="admin-password" class="login-input" placeholder="管理員密碼" autocomplete="current-password">
+      <button class="login-btn" id="admin-login-btn" onclick="adminLogin()">登入管理後台</button>
+      <div id="admin-auth-msg" class="login-msg"></div>
+      <button class="login-back" id="admin-back-btn" onclick="closeAdminPortal()" style="display:none">← 返回學生登入</button>
+    </div>
+    <div id="admin-content" style="display:none">
+      <div style="padding:12px 12px 0;text-align:right"><button class="login-back" onclick="adminLogout()">登出管理後台</button></div>
+      <div class="admin-summary" id="admin-summary"></div>
+      <div class="admin-table-wrap">
+        <div id="admin-loading" style="text-align:center;padding:20px;color:var(--gray)">🔄 載入中…</div>
+        <table class="admin-table" id="admin-table" style="display:none">
+          <thead>
+            <tr>
+              <th>名次</th><th>暱稱</th><th>積分</th><th>作答</th><th>正確率</th><th>最後更新</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -523,40 +542,50 @@ const SUPABASE_KEY = 'SUPABASE_KEY_PLACEHOLDER';
 const ALL_QUESTIONS = QUESTIONS_PLACEHOLDER;
 
 // ===== SUPABASE HELPERS =====
-async function sbGet(table, params) {
-  const url = new URL(SUPABASE_URL + '/rest/v1/' + table);
-  if (params) Object.entries(params).forEach(function(e) { url.searchParams.set(e[0], e[1]); });
-  const res = await fetch(url.toString(), {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+async function sbRpc(functionName, data, accessToken) {
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + (accessToken || SUPABASE_KEY),
+    'Content-Type': 'application/json'
+  };
+  const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + functionName, {
+    method: 'POST', headers: headers, body: JSON.stringify(data || {})
   });
-  if (!res.ok) throw new Error('sb get error ' + res.status);
+  if (!res.ok) {
+    var body = {};
+    try { body = await res.json(); } catch(e) {}
+    var err = new Error(body.message || ('RPC error ' + res.status));
+    err.status = res.status;
+    err.code = body.code || '';
+    throw err;
+  }
+  if (res.status === 204) return null;
+  var text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function sbAdminSignIn(email, password) {
+  const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  });
+  if (!res.ok) throw new Error('admin_login_failed');
   return res.json();
 }
 
-async function sbPost(table, data, prefer) {
-  const headers = {
-    'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json'
-  };
-  if (prefer) headers['Prefer'] = prefer;
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
-    method: 'POST', headers: headers, body: JSON.stringify(data)
+async function sbAdminSignOut(accessToken) {
+  if (!accessToken) return;
+  await fetch(SUPABASE_URL + '/auth/v1/logout', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + accessToken }
   });
-  return res;
-}
-
-async function sbUpsert(table, data) {
-  return sbPost(table, data, 'resolution=merge-duplicates');
-}
-
-// ===== SHA-256 =====
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 }
 
 // ===== STATE =====
 let nickname = '';
+let studentPassword = '';
+let adminAccessToken = '';
 let currentLesson = 'all';
 let sessionPool = [];
 let sessionIdx = 0;
@@ -600,16 +629,16 @@ function getTotals() {
 
 // ===== SYNC TO SUPABASE =====
 async function syncScore() {
-  if (!nickname) return;
+  if (!nickname || !studentPassword) return;
   var t = getTotals();
   var score = computeScore(t.total, t.correct);
   try {
-    await sbUpsert('cn_scores', {
-      nickname: nickname,
-      total_answered: t.total,
-      correct_count: t.correct,
-      score: score,
-      updated_at: new Date().toISOString()
+    await sbRpc('cn_save_score', {
+      p_nickname: nickname,
+      p_password: studentPassword,
+      p_total_answered: t.total,
+      p_correct_count: t.correct,
+      p_score: score
     });
   } catch(e) { /* silent fail */ }
 }
@@ -621,6 +650,7 @@ function scheduleSync() {
 
 // ===== LOGIN FLOW =====
 var loginMode = ''; // 'new' or 'existing'
+var adminDirectMode = false;
 
 window.onload = function() {
   document.getElementById('nickname-input').addEventListener('keydown', function(e){
@@ -632,7 +662,44 @@ window.onload = function() {
   document.getElementById('password-confirm').addEventListener('keydown', function(e){
     if(e.key==='Enter') step2Submit();
   });
+  document.getElementById('admin-email').addEventListener('keydown', function(e){
+    if(e.key==='Enter') document.getElementById('admin-password').focus();
+  });
+  document.getElementById('admin-password').addEventListener('keydown', function(e){
+    if(e.key==='Enter') adminLogin();
+  });
 };
+
+function openAdminFromLogin() {
+  adminDirectMode = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-badge').textContent = '🔑 管理後台';
+  document.getElementById('evo-badge').style.display = 'none';
+  document.getElementById('score-badge').style.display = 'none';
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.style.display = b.id === 'admin-tab-btn' ? '' : 'none';
+  });
+  document.getElementById('admin-back-btn').style.display = '';
+  switchTab('admin');
+  setTimeout(function(){ document.getElementById('admin-email').focus(); }, 100);
+}
+
+function closeAdminPortal() {
+  adminDirectMode = false;
+  adminAccessToken = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-auth').style.display = 'block';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('admin-email').value = '';
+  document.getElementById('admin-password').value = '';
+  document.getElementById('admin-auth-msg').style.display = 'none';
+  document.getElementById('admin-back-btn').style.display = 'none';
+  document.getElementById('evo-badge').style.display = '';
+  document.getElementById('score-badge').style.display = '';
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.style.display = ''; });
+}
 
 async function step1Next() {
   var name = document.getElementById('nickname-input').value.trim();
@@ -644,8 +711,8 @@ async function step1Next() {
   msg.className = 'login-msg';
   msg.style.display = 'none';
   try {
-    var rows = await sbGet('cn_users', { 'nickname': 'eq.' + name, 'select': 'nickname' });
-    if (rows.length === 0) {
+    var exists = await sbRpc('cn_account_exists', { p_nickname: name });
+    if (!exists) {
       // 新用戶
       loginMode = 'new';
       document.getElementById('step2-who').textContent = '👋 「' + name + '」是新帳號，請設定密碼';
@@ -690,8 +757,8 @@ async function step2Submit() {
       msg.className = 'login-msg error';
       return;
     }
-    if (pw.length < 4) {
-      msg.textContent = '❌ 密碼至少需要 4 個字元';
+    if (pw.length < 6) {
+      msg.textContent = '❌ 密碼至少需要 6 個字元';
       msg.className = 'login-msg error';
       return;
     }
@@ -703,13 +770,13 @@ async function step2Submit() {
   msg.style.display = 'none';
 
   try {
-    var hash = await sha256(pw);
     if (loginMode === 'new') {
-      var res = await sbPost('cn_users', { nickname: name, password_hash: hash });
-      if (!res.ok) {
-        var body = await res.json();
-        if (body.code === '23505') {
+      var result = await sbRpc('cn_register', { p_nickname: name, p_password: pw });
+      if (!result || !result.ok) {
+        if (result && result.code === 'nickname_taken') {
           msg.textContent = '❌ 這個暱稱已被使用，請換一個';
+        } else if (result && result.code === 'invalid_password') {
+          msg.textContent = '❌ 密碼至少需要 6 個字元';
         } else {
           msg.textContent = '❌ 建立失敗，請稍後再試';
         }
@@ -719,8 +786,8 @@ async function step2Submit() {
         return;
       }
     } else {
-      var rows = await sbGet('cn_users', { 'nickname': 'eq.' + name, 'select': 'password_hash' });
-      if (rows.length === 0 || rows[0].password_hash !== hash) {
+      var valid = await sbRpc('cn_login', { p_nickname: name, p_password: pw });
+      if (!valid) {
         msg.textContent = '❌ 密碼錯誤，請再試一次';
         msg.className = 'login-msg error';
         btn.disabled = false;
@@ -728,7 +795,7 @@ async function step2Submit() {
         return;
       }
     }
-    enterApp(name);
+    enterApp(name, pw);
   } catch(e) {
     msg.textContent = '⚠️ 網路錯誤，請稍後再試';
     msg.className = 'login-msg error';
@@ -742,8 +809,11 @@ function backToStep1() {
   document.getElementById('login-step2').style.display = 'none';
 }
 
-function enterApp(name) {
+function enterApp(name, password) {
   nickname = name;
+  studentPassword = password;
+  document.getElementById('password-input').value = '';
+  document.getElementById('password-confirm').value = '';
   loadLocalStorage();
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -753,10 +823,6 @@ function enterApp(name) {
   // 初始化進化等級（不觸發動畫）
   var t = getTotals();
   lastEvoLevel = getEvolution(computeScore(t.total, t.correct)).level;
-  // 管理員 Tab（僅 piliwu）
-  if (name === 'piliwu') {
-    document.getElementById('admin-tab-btn').style.display = '';
-  }
 }
 
 // ===== QUIZ =====
@@ -1031,11 +1097,18 @@ function switchTab(tab) {
 
 // ===== ADMIN PANEL =====
 async function loadAdminPanel() {
+  if (!adminAccessToken) {
+    document.getElementById('admin-auth').style.display = 'block';
+    document.getElementById('admin-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('admin-auth').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
   document.getElementById('admin-loading').style.display = 'block';
   document.getElementById('admin-table').style.display = 'none';
   document.getElementById('admin-summary').innerHTML = '';
   try {
-    var rows = await sbGet('cn_scores', { order:'score.desc', select:'nickname,total_answered,correct_count,score,updated_at' });
+    var rows = await sbRpc('cn_admin_list_scores', {}, adminAccessToken);
     document.getElementById('admin-loading').style.display = 'none';
     var active = rows.filter(function(r){ return r.total_answered > 0; });
     var avgAcc = active.length ? Math.round(active.reduce(function(s,r){ return s + (r.total_answered>0?r.correct_count/r.total_answered:0); },0)/active.length*100) : 0;
@@ -1068,13 +1141,53 @@ async function loadAdminPanel() {
   }
 }
 
+async function adminLogin() {
+  var email = document.getElementById('admin-email').value.trim();
+  var password = document.getElementById('admin-password').value;
+  var btn = document.getElementById('admin-login-btn');
+  var msg = document.getElementById('admin-auth-msg');
+  if (!email || !password) {
+    msg.textContent = '請輸入管理員 Email 與密碼';
+    msg.className = 'login-msg error';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '驗證中…';
+  msg.style.display = 'none';
+  try {
+    var session = await sbAdminSignIn(email, password);
+    var allowed = await sbRpc('cn_is_admin', {}, session.access_token);
+    if (!allowed) throw new Error('admin_required');
+    adminAccessToken = session.access_token;
+    document.getElementById('admin-password').value = '';
+    await loadAdminPanel();
+  } catch(e) {
+    adminAccessToken = '';
+    msg.textContent = e.message === 'admin_required' ? '❌ 此帳號沒有管理權限' : '❌ 管理員帳號或密碼錯誤';
+    msg.className = 'login-msg error';
+    msg.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = '登入管理後台';
+}
+
+async function adminLogout() {
+  var token = adminAccessToken;
+  adminAccessToken = '';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('admin-auth').style.display = 'block';
+  document.getElementById('admin-email').value = '';
+  document.getElementById('admin-password').value = '';
+  try { await sbAdminSignOut(token); } catch(e) {}
+  if (adminDirectMode) closeAdminPortal();
+}
+
 async function adminDelete(name, btn) {
   if (!confirm('確定刪除「' + name + '」的帳號與成績？')) return;
   btn.disabled = true;
   btn.textContent = '刪除中…';
   try {
-    await sbDelete('cn_scores', 'nickname=eq.' + encodeURIComponent(name));
-    await sbDelete('cn_users', 'nickname=eq.' + encodeURIComponent(name));
+    await sbRpc('cn_admin_delete_account', { p_nickname: name }, adminAccessToken);
     btn.closest('tr').remove();
     loadAdminPanel();
   } catch(e) {
@@ -1082,15 +1195,6 @@ async function adminDelete(name, btn) {
     btn.textContent = '刪除';
     alert('刪除失敗，請重試');
   }
-}
-
-async function sbDelete(table, filter) {
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + filter, {
-    method: 'DELETE',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=representation' }
-  });
-  if (!res.ok) throw new Error('delete error ' + res.status);
-  return res.json();
 }
 
 // ===== WRONG LIST =====
@@ -1164,7 +1268,8 @@ async function loadLeaderboard() {
   document.getElementById('lb-list').innerHTML = '';
   document.getElementById('my-banner').style.display = 'none';
   try {
-    var rows = await sbGet('cn_scores', { 'order': 'score.desc', 'limit': '10', 'select': 'nickname,total_answered,correct_count,score' });
+    var allRows = await sbRpc('cn_leaderboard', { p_limit: 500 });
+    var rows = allRows.slice(0, 10);
     document.getElementById('lb-loading').style.display = 'none';
 
     if (rows.length === 0) {
@@ -1173,7 +1278,6 @@ async function loadLeaderboard() {
     }
 
     // Find my rank across all
-    var allRows = await sbGet('cn_scores', { 'order': 'score.desc', 'select': 'nickname,score,total_answered,correct_count' });
     var myIdx = allRows.findIndex(function(r){ return r.nickname === nickname; });
     if (myIdx !== -1) {
       var me = allRows[myIdx];
